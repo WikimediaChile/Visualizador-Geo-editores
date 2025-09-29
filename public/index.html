@@ -179,19 +179,19 @@ const app = createApp({
             return counts;
         };
         const runComparison = (compFilters) => {
-            const dataA = allData.value.filter(d => d.country === compFilters.setA.country && d.__fileName === compFilters.setA.file);
-            const dataB = allData.value.filter(d => d.country === compFilters.setB.country && d.__fileName === compFilters.setB.file);
+            const dataA = allData.value.filter(d => d.country === compFilters.setA.country && d.wiki_db === compFilters.setA.wiki && d.__fileName === compFilters.setA.file);
+            const dataB = allData.value.filter(d => d.country === compFilters.setB.country && d.wiki_db === compFilters.setB.wiki && d.__fileName === compFilters.setB.file);
             const statsA = calculateActivityStats(dataA);
             const statsB = calculateActivityStats(dataB);
             
             const results = {
                 labels: ['1-4 Ediciones', '5-99 Ediciones', '100+ Ediciones'],
                 setA: {
-                    name: `${compFilters.setA.country} (${compFilters.setA.file})`,
+                    name: `${compFilters.setA.country} ${compFilters.setA.wiki} (${compFilters.setA.file})`,
                     counts: [statsA['1-4'], statsA['5-99'], statsA['100+']]
                 },
                 setB: {
-                    name: `${compFilters.setB.country} (${compFilters.setB.file})`,
+                    name: `${compFilters.setB.country} ${compFilters.setB.wiki} (${compFilters.setB.file})`,
                     counts: [statsB['1-4'], statsB['5-99'], statsB['100+']]
                 }
             };
@@ -447,11 +447,11 @@ app.component('comparison-modal', {
     props: ['show', 'filters', 'results'],
     emits: ['close', 'compare'],
     setup(props, { emit }) {
-        const localFilters = reactive({ setA: { country: '', file: '' }, setB: { country: '', file: '' } });
+        const localFilters = reactive({ setA: { country: '', wiki: '', file: '' }, setB: { country: '', wiki: '',file: '' } });
         const chartCanvas = ref(null);
         let chartInstance = null;
 
-        const isFormValid = computed(() => localFilters.setA.country && localFilters.setA.file && localFilters.setB.country && localFilters.setB.file);
+        const isFormValid = computed(() => localFilters.setA.country &&  localFilters.setA.wiki && localFilters.setA.file && localFilters.setB.country && localFilters.setB.wiki && localFilters.setB.file);
         const getDiffClass = (diff) => { if (diff > 0) return 'text-green-600 bg-green-100'; if (diff < 0) return 'text-red-600 bg-red-100'; return 'text-slate-600 bg-slate-100'; };
 
         const renderChart = () => {
@@ -490,13 +490,16 @@ app.component('comparison-modal', {
                                     <h3 class="font-bold text-lg mb-4 text-primary flex items-center"><span class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm mr-3">A</span>Selección A</h3>
                                     <div class="space-y-4">
                                         <div><label class="font-medium text-sm mb-1 block">País</label><searchable-select v-model="localFilters.setA.country" :options="filters.options.country" placeholder="Seleccione un país"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">Proyecto (Wiki)</label><searchable-select v-model="localFilters.setA.wiki" :options="filters.options.wiki" placeholder="Seleccione un proyecto"></searchable-select></div>
                                         <div><label class="font-medium text-sm mb-1 block">Archivo (Mes)</label><searchable-select v-model="localFilters.setA.file" :options="filters.options.file" placeholder="Seleccione un archivo"></searchable-select></div>
+                                        
                                     </div>
                                 </div>
                                 <div>
                                     <h3 class="font-bold text-lg mb-4 text-orange-600 flex items-center"><span class="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm mr-3">B</span>Selección B</h3>
                                     <div class="space-y-4">
                                         <div><label class="font-medium text-sm mb-1 block">País</label><searchable-select v-model="localFilters.setB.country" :options="filters.options.country" placeholder="Seleccione un país"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">Proyecto (Wiki)</label><searchable-select v-model="localFilters.setB.wiki" :options="filters.options.wiki" placeholder="Seleccione un proyecto"></searchable-select></div>
                                         <div><label class="font-medium text-sm mb-1 block">Archivo (Mes)</label><searchable-select v-model="localFilters.setB.file" :options="filters.options.file" placeholder="Seleccione un archivo"></searchable-select></div>
                                     </div>
                                 </div>
