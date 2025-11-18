@@ -17,10 +17,8 @@ La arquitectura cliente-servidor, con un **backend en Node.js** y un **frontend 
 
 * ✨ **Interfaz Reactiva y Moderna:** Construida con Vue.js 3 y Tailwind CSS para una experiencia de usuario fluida y un diseño adaptable a cualquier dispositivo.
 * 📊 **Visualización Dual de Datos:** Analiza tendencias con un gráfico de líneas y resume volúmenes totales con un gráfico de barras, ambos interactivos y generados con Chart.js.
-
 * 🔍 **Panel de Filtros Avanzado:** Filtra fácilmente por año, mes, proyecto (wiki) y país con selectores múltiples que incluyen buscadores para manejar grandes listas.
 * ⚖️ **Herramienta de Comparación:** Compara dos conjuntos de datos distintos (ej. Chile vs. Argentina en un mismo mes) en un panel dedicado con tablas y gráficos comparativos.
-
 * 🎓 **Tutorial Interactivo:** Una guía de bienvenida que introduce a los nuevos usuarios a todas las funcionalidades de la plataforma.
 * 💾 **Exportación a CSV:** Exporta los datos filtrados para un análisis externo en hojas de cálculo u otras herramientas.
 
@@ -77,3 +75,7 @@ Distribuido bajo la Licencia MIT. Ver `LICENSE` para más información.
 ## Contacto
 
 Jordy Lizana - [jordylizana-ship-it](https://github.com/jordylizana-ship-it)
+
+Carla Toro - [Soylacarli](https://github.com/Soylacarli)
+
+Con el apoyo de **[Wikimedia Chile](https://wikimedia.cl/)**
