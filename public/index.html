@@ -80,10 +80,14 @@
                 <div class="flex items-center gap-3">
                     <img src="/logo.png" alt="Logo Wikimedia Chile" class="h-10 w-auto">
                     <div>
-                        <h1 class="text-xl font-bold text-slate-800">Visualizador Geo-editores</h1>
-                        <p class="text-sm text-slate-500 hidden md:block">Un proyecto de análisis de Wikimedia Chile</p>
+                        <h1 class="text-xl font-bold text-slate-800">{{ t.appTitle }}</h1>
+                        <p class="text-sm text-slate-500 hidden md:block">{{ t.appSubtitle }}</p>
                     </div>
                 </div>
+                <select v-model="currentLang" class="filter-input max-w-[120px] text-sm">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                </select>
             </div>
         </header>
 
@@ -95,17 +99,30 @@
 
             <div v-else-if="allData.length === 0" class="text-center py-10">
                  <div class="max-w-3xl mx-auto mb-12 p-8 card text-left">
-                    <h2 class="text-2xl font-bold text-primary mb-4 text-center">Analiza los Datos de Geo-Editores</h2>
-                    <p class="text-slate-600 mb-6">Esta plataforma interactiva te permite explorar datos sobre los editores de proyectos Wikimedia, viendo su distribución geográfica y nivel de actividad a lo largo del tiempo.</p>
+                    <h2 class="text-2xl font-bold text-primary mb-4 text-center">{{ t.introTitle }}</h2>
+                    <p class="text-slate-600 mb-6">{{ t.introDescription }}</p>
                     <div class="grid md:grid-cols-2 gap-6 text-sm">
-                        <div class="space-y-3"><h3 class="font-bold text-slate-800"><i class="fas fa-search-location mr-2 text-primary"></i>¿Para qué funciona?</h3><p>Identifica tendencias, compara la actividad entre diferentes regiones, y obtén una visión clara de la comunidad de editores para fundamentar estrategias y reportes.</p></div>
-                        <div class="space-y-3"><h3 class="font-bold text-slate-800"><i class="fas fa-tools mr-2 text-primary"></i>Herramientas Clave</h3><ul class="list-disc list-inside space-y-1 text-slate-600"><li><strong>Filtros avanzados</strong> por año, país y proyecto.</li><li><strong>Gráficos dinámicos</strong> de actividad.</li><li><strong>Tabla de datos</strong> detallada y paginada.</li><li><strong>Exportación a CSV</strong> para análisis externo.</li></ul></div>
+                        <div class="space-y-3"><h3 class="font-bold text-slate-800">
+                            <i class="fas fa-search-location mr-2 text-primary"></i>{{ t.introPurposeTitle }}
+                        </h3>
+                        <p>{{ t.introPurposeText }}</p></div>
+                        <div class="space-y-3">
+                            <h3 class="font-bold text-slate-800">
+                                <i class="fas fa-tools mr-2 text-primary"></i>{{ t.introToolsTitle }}
+                            </h3>
+                            <ul class="list-disc list-inside space-y-1 text-slate-600">
+                                <li><strong>{{ t.introToolFiltersBold }}</strong> {{ t.introToolFiltersText }}</li>
+                                <li><strong>{{ t.introToolChartsBold }}</strong> {{ t.introToolChartsText }}</li>
+                                <li><strong>{{ t.introToolTableBold }}</strong> {{ t.introToolTableText }}</li>
+                                <li><strong>{{ t.introToolExportBold }}</strong> {{ t.introToolExportText }}</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                  <p class="text-lg text-red-600 mb-6" v-if="statusMessage.startsWith('Error')">{{ statusMessage }}</p>
                  <button @click="fetchAllDataFiles" class="btn btn-primary mx-auto text-lg py-3 px-8" :disabled="isLoading">
                      <i :class="isLoading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i>
-                     <span>{{ isLoading ? 'Cargando...' : 'Cargar Datos' }}</span>
+                     <span>{{ isLoading ? t.loading : t.loadData }}</span>
                  </button>
             </div>
             
@@ -152,6 +169,59 @@ if (window.Chart && window.ChartDataLabels) {
 
 const app = createApp({
     setup() {
+        // --- i18n / Traducciones ---
+        const currentLang = ref('es');
+
+        const translations = {
+            es: {
+                appTitle: 'Visualizador Geo-editores',
+                appSubtitle: 'Un proyecto de análisis de Wikimedia Chile',
+                introTitle: 'Analiza los Datos de Geo-Editores',
+                introDescription: 'Esta plataforma interactiva te permite explorar datos sobre los editores de proyectos Wikimedia, viendo su distribución geográfica y nivel de actividad a lo largo del tiempo.',
+                introPurposeTitle: '¿Para qué funciona?',
+                introPurposeText: 'Identifica tendencias, compara la actividad entre diferentes regiones, y obtén una visión clara de la comunidad de editores para fundamentar estrategias y reportes.',
+                introToolsTitle: 'Herramientas Clave',
+                introToolFiltersBold: 'Filtros avanzados',
+                introToolFiltersText: 'por año, país y proyecto.',
+                introToolChartsBold: 'Gráficos dinámicos',
+                introToolChartsText: 'de actividad.',
+                introToolTableBold: 'Tabla de datos',
+                introToolTableText: 'detallada y paginada.',
+                introToolExportBold: 'Exportación a CSV',
+                introToolExportText: 'para análisis externo.',
+                loadData: 'Cargar Datos',
+                loading: 'Cargando...',
+                apply: 'Aplicar',
+                clear: 'Limpiar',
+                export: 'Exportar',
+                compare: 'Comparar'
+            },
+            en: {
+                appTitle: 'Geo-editors Viewer',
+                appSubtitle: 'A Wikimedia Chile analysis project',
+                introTitle: 'Analyze Geo-editor Data',
+                introDescription: 'This interactive platform lets you explore data about Wikimedia project editors, including their geographic distribution and activity levels over time.',
+                introPurposeTitle: 'What is it for?',
+                introPurposeText: 'Identify trends, compare activity across regions, and get a clear view of the editor community to support strategies and reports.',
+                introToolsTitle: 'Key Tools',
+                introToolFiltersBold: 'Advanced filters',
+                introToolFiltersText: 'by year, country, and project.',
+                introToolChartsBold: 'Dynamic charts',
+                introToolChartsText: 'for activity analysis.',
+                introToolTableBold: 'Data table',
+                introToolTableText: 'with detailed and paginated records.',
+                introToolExportBold: 'CSV export',
+                introToolExportText: 'for external analysis.',
+                loadData: 'Load Data',
+                loading: 'Loading...',
+                apply: 'Apply',
+                clear: 'Clear',
+                export: 'Export',
+                compare: 'Compare'
+            }
+        };
+
+        const t = computed(() => translations[currentLang.value]);
         // --- Estados Principales ---
         const allData = ref([]);
         const filteredData = ref([]);
@@ -335,7 +405,7 @@ const app = createApp({
         const exportData = () => { if (filteredData.value.length === 0) return; const headerRow = headers.value.map(h => headerTranslations[h] || h).join(','); const dataRows = filteredData.value.map(row => headers.value.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')); const csvContent = [headerRow, ...dataRows].join('\n'); const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'datos_geoeditores_wikimedia_chile.csv'; link.click(); URL.revokeObjectURL(link.href); };
         const headerTranslations = { 'month': 'Mes', 'wiki_db': 'Proyecto Wiki', 'country': 'País', 'user_id': 'ID Usuario', 'user_name': 'Usuario', 'user_edit_count': 'Ediciones', 'user_registration': 'Registro', 'activity_level': 'Nivel Actividad' };
 
-        return { allData, filteredData, headers, isLoading, statusMessage, currentPage, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults };
+        return { allData, filteredData, headers, isLoading, statusMessage, currentPage, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
     }
 });
 
