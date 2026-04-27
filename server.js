@@ -21,13 +21,27 @@ const WIKIMEDIA_ANALYTICS_URL = 'https://analytics.wikimedia.org/published/datas
 // Esta ruta obtiene la lista de nombres de archivo
 app.get('/api/files', async (req, res) => {
   try {
-    const { data } = await axios.get(WIKIMEDIA_ANALYTICS_URL);
+    const { data } = await axios.get(WIKIMEDIA_ANALYTICS_URL, {
+      headers: {
+        'User-Agent': 'GeoEditoresWikimediaChile/1.0 (https://wikimedia.cl; contacto@wikimedia.cl)'
+      }
+    });
+
     const $ = cheerio.load(data);
     const fileLinks = [];
-    $('a[href$=".tsv"]').each((i, el) => fileLinks.push($(el).attr('href')));
+
+    $('a[href$=".tsv"]').each((i, el) => {
+      fileLinks.push($(el).attr('href'));
+    });
+
     res.json(fileLinks);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la lista de archivos.' });
+    console.error('Error en /api/files:', error.message);
+
+    res.status(500).json({
+      message: 'Error al obtener la lista de archivos.',
+      detail: error.message
+    });
   }
 });
 
@@ -36,7 +50,12 @@ app.get('/api/file/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const fileUrl = `${WIKIMEDIA_ANALYTICS_URL}${filename}`;
-    const { data } = await axios.get(fileUrl, { responseType: 'text' });
+    const { data } = await axios.get(fileUrl, {
+      responseType: 'text',
+      headers: {
+        'User-Agent': 'GeoEditoresWikimediaChile/1.0 (https://wikimedia.cl; contacto@wikimedia.cl)'
+      }
+    });
     res.header('Content-Type', 'text/plain').send(data);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el archivo.' });

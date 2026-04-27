@@ -127,8 +127,8 @@
             </div>
             
             <div v-else class="space-y-8">
-                <stats-panel id="stats-panel-tour" :stats="stats" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
-                <filters-panel id="filters-panel-tour" :filters="filters" @apply="applyFilters" @clear="clearFilters" @export="exportData" @open-compare="openComparisonModal" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 1 }"></filters-panel>
+                <stats-panel id="stats-panel-tour" :stats="stats" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
+                <filters-panel id="filters-panel-tour" :filters="filters" :t="t" @apply="applyFilters" @clear="clearFilters" @export="exportData" @open-compare="openComparisonModal" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 1 }"></filters-panel>
                 <div v-if="filteredData.length > 0" class="space-y-8">
                     <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
                     <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
@@ -136,7 +136,7 @@
                 </div>
                 <div v-if="filteredData.length === 0" class="card text-center py-12">
                      <i class="fas fa-search fa-2x text-slate-400 mb-4"></i>
-                      <p class="text-slate-600">No se encontraron resultados con los filtros aplicados.</p>
+                      <p class="text-slate-600">{{ t.noResults }}</p>
                 </div>
             </div>
         </main>
@@ -147,8 +147,12 @@
                     <a href="https://wikimedia.cl/" target="_blank" rel="noopener noreferrer"><img src="/wikiemdia foundation logo.webp" alt="Logo Wikimedia Chile" class="h-12 w-auto"></a>
                     <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer"><img src="/wikidata logo.png" alt="Logo Wikidata" class="h-8 w-auto"></a>
                 </div>
-                <p class="text-sm">Desarrollado por la organización Wikimedia Chile.<br>Los datos son obtenidos de conjuntos de datos públicos de Wikimedia Analytics.</p>
-                <p class="text-xs mt-4 text-slate-500">© {{ currentYear }} Wikimedia Chile. Todos los derechos reservados.</p>
+                <p class="text-sm">
+                    {{ t.footerDevelopedBy }}<br>{{ t.footerDataSource }}
+                </p>
+                <p class="text-xs mt-4 text-slate-500">
+                    {{ currentYear }} Wikimedia Chile. {{ t.footerRights }}
+                </p>
             </div>
         </footer>
 
@@ -191,10 +195,26 @@ const app = createApp({
                 introToolExportText: 'para análisis externo.',
                 loadData: 'Cargar Datos',
                 loading: 'Cargando...',
+                noResults: 'No se encontraron resultados con los filtros aplicados.',
+                statsTotalRecords: 'Total Registros',
+                statsDifferentWikis: 'Wikis Diferentes',
+                statsUniqueCountries: 'Países Únicos',
+                statsDateRange: 'Rango de Fechas',
                 apply: 'Aplicar',
                 clear: 'Limpiar',
                 export: 'Exportar',
-                compare: 'Comparar'
+                compare: 'Comparar',
+                filterYear: 'Año',
+                filterFile: 'Archivo',
+                filterWiki: 'Proyecto (Wiki)',
+                filterCountry: 'País',
+                all: 'Todos',
+                selectWikis: 'Seleccionar Wikis...',
+                selectCountries: 'Seleccionar Países...',
+                compareData: 'Comparar datos',
+                footerDevelopedBy: 'Desarrollado por Wikimedia Chile.',
+                footerDataSource: 'Los datos son obtenidos de conjuntos de datos públicos de Wikimedia Analytics.',
+                footerRights: 'CC BY-SA 4.0.',
             },
             en: {
                 appTitle: 'Geo-editors Viewer',
@@ -214,10 +234,26 @@ const app = createApp({
                 introToolExportText: 'for external analysis.',
                 loadData: 'Load Data',
                 loading: 'Loading...',
+                noResults: 'No results were found with the selected filters.',
+                statsTotalRecords: 'Total Records',
+                statsDifferentWikis: 'Different Wikis',
+                statsUniqueCountries: 'Unique Countries',
+                statsDateRange: 'Date Range',
                 apply: 'Apply',
                 clear: 'Clear',
                 export: 'Export',
-                compare: 'Compare'
+                compare: 'Compare',
+                filterYear: 'Year',
+                filterFile: 'File',
+                filterWiki: 'Project (Wiki)',
+                filterCountry: 'Country',
+                all: 'All',
+                selectWikis: 'Select Wikis...',
+                selectCountries: 'Select Countries...',
+                compareData: 'Compare data',
+                footerDevelopedBy: 'Developed by Wikimedia Chile.',
+                footerDataSource: 'Data is obtained from public Wikimedia Analytics datasets.',
+                footerRights: 'CC BY-SA 4.0',
             }
         };
 
@@ -453,39 +489,77 @@ app.component('searchable-select', {
 });
 
 app.component('stats-panel', {
-    props: ['stats'],
-    template: `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-light text-primary text-xl"><i class="fas fa-database"></i></div><div><div class="text-sm text-slate-500">Total Registros</div><div class="text-2xl font-bold">{{ stats.totalRecords }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-600 text-xl"><i class="fas fa-globe"></i></div><div><div class="text-sm text-slate-500">Wikis Diferentes</div><div class="text-2xl font-bold">{{ stats.totalWikis }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 text-xl"><i class="fas fa-flag"></i></div><div><div class="text-sm text-slate-500">Países Únicos</div><div class="text-2xl font-bold">{{ stats.totalCountries }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-red-100 text-red-600 text-xl"><i class="fas fa-calendar-alt"></i></div><div><div class="text-sm text-slate-500">Rango de Fechas</div><div class="text-lg font-bold">{{ stats.dateRange }}</div></div></div></div>`
+    props: ['stats', 't'],
+    template: `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-light text-primary text-xl"><i class="fas fa-database"></i></div><div><div class="text-sm text-slate-500">{{ t.statsTotalRecords }}</div><div class="text-2xl font-bold">{{ stats.totalRecords }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-600 text-xl"><i class="fas fa-globe"></i></div><div><div class="text-sm text-slate-500">{{ t.statsDifferentWikis }}</div><div class="text-2xl font-bold">{{ stats.totalWikis }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-orange-100 text-orange-600 text-xl"><i class="fas fa-flag"></i></div><div><div class="text-sm text-slate-500">{{ t.statsUniqueCountries }}</div><div class="text-2xl font-bold">{{ stats.totalCountries }}</div></div></div><div class="card p-5 flex items-center gap-4"><div class="w-12 h-12 rounded-full flex items-center justify-center bg-red-100 text-red-600 text-xl"><i class="fas fa-calendar-alt"></i></div><div><div class="text-sm text-slate-500">{{ t.statsDateRange }}</div><div class="text-lg font-bold">{{ stats.dateRange }}</div></div></div></div>`
 });
 
 app.component('filters-panel', {
-    props: ['filters'],
+    props: ['filters', 't'],
     emits: ['apply', 'clear', 'export', 'openCompare'],
-    setup(props, { emit }) { const localFilters = reactive(JSON.parse(JSON.stringify(props.filters))); watch(() => props.filters, (newFilters) => Object.assign(localFilters, newFilters), { deep: true }); return { localFilters, emit }; },
+    setup(props, { emit }) {
+        const localFilters = reactive(JSON.parse(JSON.stringify(props.filters)));
+
+        watch(() => props.filters, (newFilters) => {
+            Object.assign(localFilters, newFilters);
+        }, { deep: true });
+
+        return { localFilters, emit };
+    },
     template: `<div class="card"><div class="card-body">
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
             <!-- Filters Group -->
             <div class="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div><label class="font-medium text-sm mb-2 block">Año</label><select v-model="localFilters.year" class="filter-input"><option v-for="opt in filters.options.year" :value="opt">{{ opt === 'all' ? 'Todos' : opt }}</option></select></div>
-                <div><label class="font-medium text-sm mb-2 block">Archivo</label><select v-model="localFilters.file" class="filter-input"><option value="">Todos</option><option v-for="opt in filters.options.file" :value="opt">{{ opt }}</option></select></div>
-                <div><label class="font-medium text-sm mb-2 block">Proyecto (Wiki)</label><searchable-multiselect v-model="localFilters.wiki" :options="filters.options.wiki" placeholder="Seleccionar Wikis..."></searchable-multiselect></div>
-                <div><label class="font-medium text-sm mb-2 block">País</label><searchable-multiselect v-model="localFilters.country" :options="filters.options.country" placeholder="Seleccionar Países..."></searchable-multiselect></div>
+                <div>
+                    <label class="font-medium text-sm mb-2 block">{{ t.filterYear }}</label>
+                    <select v-model="localFilters.year" class="filter-input">
+                        <option v-for="opt in filters.options.year" :value="opt">{{ opt === 'all' ? t.all : opt }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm mb-2 block">{{ t.filterFile }}</label>
+                    <select v-model="localFilters.file" class="filter-input">
+                        <option value="">{{ t.all }}</option>
+                        <option v-for="opt in filters.options.file" :value="opt">{{ opt }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm mb-2 block">{{ t.filterWiki }}</label>
+                    <searchable-multiselect
+                        v-model="localFilters.wiki"
+                        :options="filters.options.wiki"
+                        :placeholder="t.selectWikis">
+                    </searchable-multiselect>
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm mb-2 block">{{ t.filterCountry }}</label>
+                    <searchable-multiselect
+                        v-model="localFilters.country"
+                        :options="filters.options.country"
+                        :placeholder="t.selectCountries">
+                    </searchable-multiselect>
+                </div>
             </div>
+
             <!-- Buttons Group -->
             <div class="md:col-span-1 lg:col-span-1 flex flex-col gap-3">
                 <div class="grid grid-cols-2 gap-3">
                     <button @click="emit('apply', localFilters)" class="btn btn-primary w-full">
-                        <i class="fas fa-check mr-2"></i>Aplicar
+                        <i class="fas fa-check mr-2"></i>{{ t.apply }}
                     </button>
                     <button @click="emit('clear')" class="btn btn-secondary w-full">
-                        <i class="fas fa-times mr-2"></i>Limpiar
+                        <i class="fas fa-times mr-2"></i>{{ t.clear }}
                     </button>
                 </div>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="emit('export')" class="btn btn-secondary w-full" title="Exportar">
-                        <i class="fas fa-file-export mr-2"></i>Exportar
+                    <button @click="emit('export')" class="btn btn-secondary w-full" :title="t.export">
+                        <i class="fas fa-file-export mr-2"></i>{{ t.export }}
                     </button>
-                    <button @click="emit('openCompare')" class="btn btn-secondary w-full" title="Comparar datos">
-                        <i class="fas fa-balance-scale mr-2"></i>Comparar
+                    <button @click="emit('openCompare')" class="btn btn-secondary w-full" :title="t.compareData">
+                        <i class="fas fa-balance-scale mr-2"></i>{{ t.compare }}
                     </button>
                 </div>
             </div>
