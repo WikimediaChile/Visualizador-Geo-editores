@@ -4,7 +4,7 @@
     <link rel="icon" href="/icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Geo-editores Wikimedia | Vue.js Edition</title>
+    <title>Geo-editors Wikimedia Viewer | Vue.js Edition</title>
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <!-- Tailwind CSS -->
@@ -78,15 +78,18 @@
         <header class="bg-white py-4 border-b border-border-color sticky top-0 z-20">
             <div class="container mx-auto px-4 max-w-7xl flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img src="/logo.png" alt="Logo Wikimedia Chile" class="h-10 w-auto">
+                    <img src="/logo.png" alt="Wikimedia Chile" class="h-10 w-auto">
                     <div>
                         <h1 class="text-xl font-bold text-slate-800">{{ t.appTitle }}</h1>
                         <p class="text-sm text-slate-500 hidden md:block">{{ t.appSubtitle }}</p>
                     </div>
                 </div>
-                <select v-model="currentLang" class="filter-input max-w-[120px] text-sm">
-                    <option value="es">Español</option>
-                    <option value="en">English</option>
+                <select
+                    v-model="currentLang"
+                    class="filter-input max-w-[120px] text-sm"
+                    :aria-label="t.languageSelectorLabel">
+                    <option value="es">{{ t.languageSpanish }}</option>
+                    <option value="en">{{ t.languageEnglish }}</option>
                 </select>
             </div>
         </header>
@@ -119,7 +122,7 @@
                         </div>
                     </div>
                 </div>
-                 <p class="text-lg text-red-600 mb-6" v-if="statusMessage.startsWith('Error')">{{ statusMessage }}</p>
+                 <p class="text-lg text-red-600 mb-6" v-if="hasError">{{ statusMessage }}</p>
                  <button @click="fetchAllDataFiles" class="btn btn-primary mx-auto text-lg py-3 px-8" :disabled="isLoading">
                      <i :class="isLoading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i>
                      <span>{{ isLoading ? t.loading : t.loadData }}</span>
@@ -156,8 +159,8 @@
         <footer class="bg-white border-t border-border-color mt-12 py-8">
             <div class="container mx-auto px-4 max-w-7xl text-center text-slate-600">
                 <div class="flex justify-center items-center gap-6 mb-4">
-                    <a href="https://wikimedia.cl/" target="_blank" rel="noopener noreferrer"><img src="/wikiemdia foundation logo.webp" alt="Logo Wikimedia Chile" class="h-12 w-auto"></a>
-                    <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer"><img src="/wikidata logo.png" alt="Logo Wikidata" class="h-8 w-auto"></a>
+                    <a href="https://wikimedia.cl/" target="_blank" rel="noopener noreferrer"><img src="/wikiemdia foundation logo.webp" alt="Wikimedia Foundation" class="h-12 w-auto"></a>
+                    <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer"><img src="/wikidata logo.png" alt="Wikidata" class="h-8 w-auto"></a>
                 </div>
                 <p class="text-sm">
                     {{ t.footerDevelopedBy }}<br>{{ t.footerDataSource }}
@@ -173,8 +176,15 @@
         <div v-if="tutorial.active && currentTutorialStep" class="tutorial-popover" :style="tutorial.position"><p class="text-slate-700 mb-6 text-lg">{{ currentTutorialStep.text }}</p><div class="flex justify-between items-center"><span class="text-sm font-medium text-slate-500">{{ tutorial.step + 1 }} / {{ tutorialSteps.length }}</span><div><button @click="endTutorial" class="btn btn-secondary !py-1 !px-3 mr-2">{{ t.skip }}</button><button @click="nextTutorialStep" class="btn btn-primary !py-1 !px-3">{{ tutorial.step === tutorialSteps.length - 1 ? t.finish : t.next }}<i class="fas fa-arrow-right ml-2"></i></button></div></div></div>
 
         <!-- Modal de Comparación -->
-        <comparison-modal :show="isComparisonModalOpen" :filters="filters" :results="comparisonResults" @close="closeComparisonModal" @compare="runComparison"></comparison-modal>
-    </div>
+        <comparison-modal
+            :show="isComparisonModalOpen"
+            :filters="filters"
+            :results="comparisonResults"
+            :t="t"
+            @close="closeComparisonModal"
+            @compare="runComparison">
+        </comparison-modal>
+</div>
 
     <script type="module">
 const { createApp, ref, reactive, computed, onMounted, watch, onBeforeUnmount, nextTick } = Vue;
@@ -264,6 +274,29 @@ const app = createApp({
                 tutorialTimeChart: 'Este gráfico de líneas muestra la evolución de los editores a lo largo del tiempo.',
                 tutorialActivityChart: 'Este gráfico de barras te da una vista rápida del total de editores en cada categoría.',
                 tutorialResultsTable: 'Finalmente, aquí puedes ver los datos en detalle. Usa la paginación para navegar.',
+                compareModalTitle: 'Comparar Datos de Actividad',
+                selectionA: 'Selección A',
+                selectionB: 'Selección B',
+                fileMonth: 'Archivo (Mes)',
+                selectCountry: 'Seleccione un país',
+                selectProject: 'Seleccione un proyecto',
+                selectFile: 'Seleccione un archivo',
+                compareSelections: 'Comparar Selecciones',
+                comparisonResultsTitle: 'Resultados de la Comparación',
+                activityLevel: 'Nivel de Actividad',
+                difference: 'Diferencia',
+                totalEditors: 'Total Editores',
+                statusFetchingFiles: 'Obteniendo lista de archivos...',
+                statusProcessing: 'Procesando',
+                filesLowercase: 'archivos',
+                error: 'Error',
+                errorNoFilesFound: 'No se encontraron archivos .tsv desde el backend.',
+                errorCouldNotDownload: 'No se pudo descargar',
+                exportFileName: 'datos_geoeditores_wikimedia_chile.csv',
+                documentTitle: 'Visualizador de Geo-editores Wikimedia | Vue.js Edition',
+                languageSelectorLabel: 'Seleccionar idioma',
+                languageSpanish: 'Español',
+                languageEnglish: 'Inglés',
             },
             en: {
                 appTitle: 'Geo-editors Viewer',
@@ -340,15 +373,41 @@ const app = createApp({
                 tutorialTimeChart: 'This line chart shows how editors evolve over time.',
                 tutorialActivityChart: 'This bar chart gives you a quick view of the total number of editors in each category.',
                 tutorialResultsTable: 'Finally, here you can view the data in detail. Use pagination to browse it.',
+                compareModalTitle: 'Compare Activity Data',
+                selectionA: 'Selection A',
+                selectionB: 'Selection B',
+                fileMonth: 'File (Month)',
+                selectCountry: 'Select a country',
+                selectProject: 'Select a project',
+                selectFile: 'Select a file',
+                compareSelections: 'Compare Selections',
+                comparisonResultsTitle: 'Comparison Results',
+                activityLevel: 'Activity Level',
+                difference: 'Difference',
+                totalEditors: 'Total Editors',
+                statusFetchingFiles: 'Fetching file list...',
+                statusProcessing: 'Processing',
+                filesLowercase: 'files',
+                error: 'Error',
+                errorNoFilesFound: 'No .tsv files were found from the backend.',
+                errorCouldNotDownload: 'Could not download',
+                exportFileName: 'wikimedia_chile_geoeditors_data.csv',
+                documentTitle: 'Wikimedia Geo-editors Viewer | Vue.js Edition',
+                languageSelectorLabel: 'Select language',
+                languageSpanish: 'Spanish',
+                languageEnglish: 'English',
             }
         };
 
         const t = computed(() => translations[currentLang.value]);
+        watch(currentLang, () => {document.title = t.value.documentTitle;}, { immediate: true });
+
         // --- Estados Principales ---
         const allData = ref([]);
         const filteredData = ref([]);
         const headers = ref([]);
         const isLoading = ref(false);
+        const hasError = ref(false);
         const statusMessage = ref('');
         const currentPage = ref(1);
         const isResultsTableOpen = ref(false);
@@ -378,7 +437,7 @@ const app = createApp({
             const statsB = calculateActivityStats(dataB);
             
             const results = {
-                labels: ['1-4 Ediciones', '5-99 Ediciones', '100+ Ediciones'],
+                labels: [t.value.activityLevel1to4, t.value.activityLevel5to99, t.value.activityLevel100plus],
                 setA: {
                     name: `${compFilters.setA.country} ${compFilters.setA.wiki} (${compFilters.setA.file})`,
                     counts: [statsA['1-4'], statsA['5-99'], statsA['100+']]
@@ -463,7 +522,7 @@ const app = createApp({
         const parseNumber = (val) => { if (val === null || val === undefined) return 0; const s = String(val).trim(); if (!s) return 0; const digits = s.replace(/[^\d\-]/g,''); const n = parseInt(digits, 10); return isNaN(n) ? 0 : n; };
         const parseEdits = (val) => parseNumber(val);
         const detectCategory = (activityText, editsNum) => { const t = (activityText || '').toString().toLowerCase(); if (t) { if ((/1\D*4/.test(t)) || t.includes('1-4') || t.includes('1 a 4') || (t.includes('1') && t.includes('4'))) return '1-4'; if ((/5\D*99/.test(t)) || t.includes('5-99') || t.includes('5 a 99') || t.includes('5-')) return '5-99'; if (t.includes('100') || t.includes('100+')) return '100+'; } const n = editsNum || 0; if (n >= 1 && n <= 4) return '1-4'; if (n >= 5 && n <= 99) return '5-99'; if (n >= 100) return '100+'; return '0'; };
-        const stats = computed(() => { if (allData.value.length === 0) return { totalRecords: '-', totalWikis: '-', totalCountries: '-', dateRange: '-' }; const months = [...new Set(allData.value.map(item => item._month).filter(Boolean))].sort(); return { totalRecords: allData.value.length.toLocaleString('es-CL'), totalWikis: [...new Set(allData.value.map(item => item.wiki_db))].length.toLocaleString('es-CL'), totalCountries: [...new Set(allData.value.map(item => item.country))].length.toLocaleString('es-CL'), dateRange: months.length ? `${months[0]} a ${months[months.length - 1]}` : '-' }; });
+        const stats = computed(() => { if (allData.value.length === 0) return { totalRecords: '-', totalWikis: '-', totalCountries: '-', dateRange: '-' }; const months = [...new Set(allData.value.map(item => item._month).filter(Boolean))].sort(); return { totalRecords: allData.value.length.toLocaleString(t.locale), totalWikis: [...new Set(allData.value.map(item => item.wiki_db))].length.toLocaleString(t.locale), totalCountries: [...new Set(allData.value.map(item => item.country))].length.toLocaleString(t.locale), dateRange: months.length ? `${months[0]} a ${months[months.length - 1]}` : '-' }; });
         const totalPages = computed(() => Math.ceil(filteredData.value.length / ROWS_PER_PAGE) || 1);
         const paginatedData = computed(() => { const start = (currentPage.value - 1) * ROWS_PER_PAGE; return filteredData.value.slice(start, start + ROWS_PER_PAGE); });
         const activityChartData = computed(() => { if (!filteredData.value.length) return null; const counts = { '1-4': 0, '5-99': 0, '100+': 0 }; filteredData.value.forEach(r => { const c = r._category || '0'; const editors = Number(r._editorsCount || 0); if (c === '1-4') counts['1-4'] += editors; else if (c === '5-99') counts['5-99'] += editors; else if (c === '100+') counts['100+'] += editors; }); return { labels: [t.value.activityLevel1to4Short, t.value.activityLevel5to99Short, t.value.activityLevel100plusShort], data: [counts['1-4'], counts['5-99'], counts['100+']] }; });
@@ -518,14 +577,14 @@ const app = createApp({
             return { labels: chartLabels, datasets };
         });
 
-        const fetchAllDataFiles = async () => { isLoading.value = true; statusMessage.value = 'Obteniendo lista de archivos...'; allData.value = []; headers.value = []; try { const response = await fetch('/api/files'); if (!response.ok) throw new Error(`El servidor respondió con un error: ${response.statusText}`); const fileList = await response.json(); if (fileList.length === 0) throw new Error("No se encontraron archivos .tsv desde el backend."); let loadedCount = 0; const BATCH_SIZE = 5; for (let i = 0; i < fileList.length; i += BATCH_SIZE) { const batch = fileList.slice(i, i + BATCH_SIZE); const promises = batch.map(fileName => fetch(`/api/file/${fileName}`).then(res => { if (!res.ok) throw new Error(`No se pudo descargar ${fileName}`); return res.text(); }).then(text => ({ text, name: fileName })) ); const results = await Promise.all(promises); results.forEach(res => { if (res.text) allData.value.push(...parseTSV(res.text, res.name)); }); loadedCount += batch.length; statusMessage.value = `Procesando ${loadedCount} de ${fileList.length} archivos...`; } normalizeRecords(); populateFilters(); applyFilters(); if (!tutorial.ran) { setTimeout(startTutorial, 500); } } catch (error) { console.error("Error detallado:", error); statusMessage.value = `Error: ${error.message}`; } finally { isLoading.value = false; } };
+        const fetchAllDataFiles = async () => { isLoading.value = true; statusMessage.value = t.value.statusFetchingFiles; hasError.value = false; allData.value = []; headers.value = []; try { const response = await fetch('/api/files'); if (!response.ok) throw new Error(`El servidor respondió con un error: ${response.statusText}`); const fileList = await response.json(); if (fileList.length === 0) throw new Error(t.value.errorNoFilesFound); let loadedCount = 0; const BATCH_SIZE = 5; for (let i = 0; i < fileList.length; i += BATCH_SIZE) { const batch = fileList.slice(i, i + BATCH_SIZE); const promises = batch.map(fileName => fetch(`/api/file/${fileName}`).then(res => { if (!res.ok) throw new Error(`${t.value.errorCouldNotDownload} ${fileName}`); return res.text(); }).then(text => ({ text, name: fileName })) ); const results = await Promise.all(promises); results.forEach(res => { if (res.text) allData.value.push(...parseTSV(res.text, res.name)); }); loadedCount += batch.length; statusMessage.value = `${t.value.statusProcessing} ${loadedCount} ${t.value.of} ${fileList.length} ${t.value.filesLowercase}...`; } normalizeRecords(); populateFilters(); applyFilters(); if (!tutorial.ran) { setTimeout(startTutorial, 500); } } catch (error) { console.error("Error detallado:", error); statusMessage.value = `${t.value.error}: ${error.message}`; hasError.value = true; } finally { isLoading.value = false; } };
         const parseTSV = (text, fileName) => { const lines = text.trim().split('\n'); if (lines.length < 2) return []; if (headers.value.length === 0) headers.value = lines[0].split('\t').map(h => h.trim()); return lines.slice(1).map(line => { const values = line.split('\t'), row = {}; headers.value.forEach((h, i) => row[h] = values[i] ? values[i].trim() : ''); row.__fileName = fileName; return row; }); };
         const normalizeRecords = () => { const monthKey = findHeaderKey(['month','mes','date','fecha']); const editsKey = findHeaderKey(['edit','edicion','edit_count','user_edit_count','editcount','ediciones']); const activityKey = findHeaderKey(['activity','activity_level','nivel','nivel_actividad','activity-level']); const editorsCountKey = findHeaderKey(['editors','editor_count','editors_count','count','editors_total','editors_total','editors_agg','editors_aggregated','editors_per_month','editor_count']); allData.value = allData.value.map(r => { const copy = { ...r }; const rawMonth = (monthKey && copy[monthKey]) ? copy[monthKey] : (copy.month || copy.date || copy.mes || ''); copy._month = normMonth(rawMonth); const rawEdits = (editsKey && copy[editsKey]) ? copy[editsKey] : (copy.user_edit_count || copy.edit_count || copy.ediciones || ''); copy._edits = parseEdits(rawEdits); const rawActivity = (activityKey && copy[activityKey]) ? copy[activityKey] : (copy.activity_level || ''); let editorsCount = 0; if (editorsCountKey && copy[editorsCountKey]) editorsCount = parseNumber(copy[editorsCountKey]); if (!editorsCount) { if (copy.user_id || copy.user_name || copy.user) editorsCount = 1; } copy._editorsCount = editorsCount; copy._category = detectCategory(rawActivity, copy._edits); return copy; }); };
         const populateFilters = () => { const data = allData.value; filters.options.file = [...new Set(data.map(d => d.__fileName))].sort((a,b) => b.localeCompare(a)); filters.options.wiki = [...new Set(data.map(d => d.wiki_db))].sort(); filters.options.country = [...new Set(data.map(d => d.country))].sort(); const years = [...new Set(data.map(d => (d._month || '').toString().slice(0,4)))].filter(Boolean).sort((a,b) => b - a); filters.options.year = ['all', ...years]; };
         const applyFilters = (newFilters = filters) => { let data = allData.value.slice(); if (newFilters.file) data = data.filter(d => d.__fileName === newFilters.file); if (newFilters.year && newFilters.year !== 'all') data = data.filter(d => (d._month || '').startsWith(newFilters.year)); if (newFilters.wiki && newFilters.wiki.length) data = data.filter(d => newFilters.wiki.includes(d.wiki_db)); if (newFilters.country && newFilters.country.length) data = data.filter(d => newFilters.country.includes(d.country)); filteredData.value = data; currentPage.value = 1; };
         const clearFilters = () => { filters.file = ''; filters.year = 'all'; filters.wiki = []; filters.country = []; applyFilters(); };
         const changePage = (page) => { if (page > 0 && page <= totalPages.value) currentPage.value = page; };
-        const exportData = () => { if (filteredData.value.length === 0) return; const headerRow = headers.value.map(h => headerTranslations.value[h] || h).join(','); const dataRows = filteredData.value.map(row => headers.value.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')); const csvContent = [headerRow, ...dataRows].join('\n'); const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'datos_geoeditores_wikimedia_chile.csv'; link.click(); URL.revokeObjectURL(link.href); };
+        const exportData = () => { if (filteredData.value.length === 0) return; const headerRow = headers.value.map(h => headerTranslations.value[h] || h).join(','); const dataRows = filteredData.value.map(row => headers.value.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')); const csvContent = [headerRow, ...dataRows].join('\n'); const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = t.value.exportFileName; link.click(); URL.revokeObjectURL(link.href); };
         const headerTranslations = computed(() => ({
             'month': t.value.tableHeaderMonth,
             'wiki_db': t.value.tableHeaderWiki,
@@ -537,7 +596,7 @@ const app = createApp({
             'activity_level': t.value.tableHeaderActivityLevel
         }));
 
-        return { allData, filteredData, headers, isLoading, statusMessage, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
+        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
     }
 });
 
@@ -585,7 +644,12 @@ app.component('searchable-multiselect', {
 
 // NUEVO: Componente Searchable Select (para selección única con buscador)
 app.component('searchable-select', {
-    props: { modelValue: { type: String, default: '' }, options: { type: Array, default: () => [] }, placeholder: { type: String, default: 'Seleccionar...' } },
+    props: {
+        modelValue: { type: String, default: '' },
+        options: { type: Array, default: () => [] },
+        placeholder: { type: String, default: 'Seleccionar...' },
+        t: { type: Object, default: () => ({}) }
+},
     emits: ['update:modelValue'],
     setup(props, { emit }) {
         const isOpen = ref(false); const searchTerm = ref(''); const root = ref(null);
@@ -604,14 +668,14 @@ app.component('searchable-select', {
                 <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" :class="{'rotate-180': isOpen}"></i>
             </div>
             <div v-if="isOpen" class="absolute top-full left-0 right-0 mt-2 bg-white border border-border-color rounded-lg shadow-lg z-50">
-                <div class="p-2"><input type="text" v-model="searchTerm" placeholder="Buscar..." @click.stop class="filter-input w-full text-sm"></div>
+                <div class="p-2"><input type="text" v-model="searchTerm" :placeholder="t.search" @click.stop class="filter-input w-full text-sm"></div>
                 <ul class="max-h-60 overflow-y-auto p-2">
                     <li v-for="option in filteredOptions" :key="option" @click="selectOption(option)" 
                         class="p-2 rounded-md hover:bg-slate-100 cursor-pointer text-sm text-slate-700"
                         :class="{'bg-primary-light text-primary font-semibold': modelValue === option}">
                         {{ option }}
                     </li>
-                    <li v-if="filteredOptions.length === 0" class="p-2 text-sm text-slate-500 text-center">No hay resultados</li>
+                    <li v-if="filteredOptions.length === 0" class="p-2 text-sm text-slate-500 text-center">{{ t.noDropdownResults }}</li>
                 </ul>
             </div>
         </div>
@@ -787,7 +851,7 @@ app.component('results-table', {
 
 // Componente del Modal de Comparación Mejorado
 app.component('comparison-modal', {
-    props: ['show', 'filters', 'results'],
+    props: ['show', 'filters', 'results', 't'],
     emits: ['close', 'compare'],
     setup(props, { emit }) {
         const localFilters = reactive({ setA: { country: '', wiki: '', file: '' }, setB: { country: '', wiki: '',file: '' } });
@@ -806,8 +870,8 @@ app.component('comparison-modal', {
                 data: {
                     labels: props.results.labels,
                     datasets: [
-                        { label: 'Selección A', data: props.results.setA.counts, backgroundColor: 'rgba(51, 102, 204, 0.8)', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.6 },
-                        { label: 'Selección B', data: props.results.setB.counts, backgroundColor: 'rgba(245, 141, 0, 0.8)', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.6 }
+                        { label: props.t.selectionA, data: props.results.setA.counts, backgroundColor: 'rgba(51, 102, 204, 0.8)', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.6 },
+                        { label: props.t.selectionB, data: props.results.setB.counts, backgroundColor: 'rgba(245, 141, 0, 0.8)', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.6 }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, datalabels: { display: false } }, scales: { y: { beginAtZero: true } } }
@@ -823,47 +887,47 @@ app.component('comparison-modal', {
             <div class="modal-container">
                 <div class="modal-content">
                     <div class="card-header flex justify-between items-center bg-slate-50">
-                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-3"><i class="fas fa-balance-scale text-primary"></i>Comparar Datos de Actividad</h2>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-3"><i class="fas fa-balance-scale text-primary"></i>{{ t.compareModalTitle }}</h2>
                         <button @click="emit('close')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
                     </div>
                     <div class="card-body overflow-y-auto bg-light-gray flex-1">
                         <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div class="border-r-0 md:border-r border-border-color pr-0 md:pr-8">
-                                    <h3 class="font-bold text-lg mb-4 text-primary flex items-center"><span class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm mr-3">A</span>Selección A</h3>
+                                    <h3 class="font-bold text-lg mb-4 text-primary flex items-center"><span class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm mr-3">A</span>{{ t.selectionA }}</h3>
                                     <div class="space-y-4">
-                                        <div><label class="font-medium text-sm mb-1 block">País</label><searchable-select v-model="localFilters.setA.country" :options="filters.options.country" placeholder="Seleccione un país"></searchable-select></div>
-                                        <div><label class="font-medium text-sm mb-1 block">Proyecto (Wiki)</label><searchable-select v-model="localFilters.setA.wiki" :options="filters.options.wiki" placeholder="Seleccione un proyecto"></searchable-select></div>
-                                        <div><label class="font-medium text-sm mb-1 block">Archivo (Mes)</label><searchable-select v-model="localFilters.setA.file" :options="filters.options.file" placeholder="Seleccione un archivo"></searchable-select></div>
-                                        
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.filterCountry }}</label><searchable-select v-model="localFilters.setA.country" :options="filters.options.country" :placeholder="t.selectCountry" :t="t"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.filterWiki }}</label><searchable-select v-model="localFilters.setA.wiki" :options="filters.options.wiki" :placeholder="t.selectProject" :t="t"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.fileMonth }}</label><searchable-select v-model="localFilters.setA.file" :options="filters.options.file" :placeholder="t.selectFile" :t="t"></searchable-select></div>
+
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-lg mb-4 text-orange-600 flex items-center"><span class="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm mr-3">B</span>Selección B</h3>
+                                    <h3 class="font-bold text-lg mb-4 text-orange-600 flex items-center"><span class="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm mr-3">B</span>{{ t.selectionB }}</h3>
                                     <div class="space-y-4">
-                                        <div><label class="font-medium text-sm mb-1 block">País</label><searchable-select v-model="localFilters.setB.country" :options="filters.options.country" placeholder="Seleccione un país"></searchable-select></div>
-                                        <div><label class="font-medium text-sm mb-1 block">Proyecto (Wiki)</label><searchable-select v-model="localFilters.setB.wiki" :options="filters.options.wiki" placeholder="Seleccione un proyecto"></searchable-select></div>
-                                        <div><label class="font-medium text-sm mb-1 block">Archivo (Mes)</label><searchable-select v-model="localFilters.setB.file" :options="filters.options.file" placeholder="Seleccione un archivo"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.filterCountry }}</label><searchable-select v-model="localFilters.setB.country" :options="filters.options.country" :placeholder="t.selectCountry" :t="t"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.filterWiki }}</label><searchable-select v-model="localFilters.setB.wiki" :options="filters.options.wiki" :placeholder="t.selectProject" :t="t"></searchable-select></div>
+                                        <div><label class="font-medium text-sm mb-1 block">{{ t.fileMonth }}</label><searchable-select v-model="localFilters.setB.file" :options="filters.options.file" :placeholder="t.selectFile" :t="t"></searchable-select></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="text-center mb-6">
-                            <button @click="emit('compare', localFilters)" :disabled="!isFormValid" class="btn btn-primary text-base py-2 px-6 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"><i class="fas fa-balance-scale-right mr-2"></i>Comparar Selecciones</button>
-                        </div>
+                            <button @click="emit('compare', localFilters)" :disabled="!isFormValid" class="btn btn-primary text-base py-2 px-6 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"><i class="fas fa-balance-scale-right mr-2"></i>{{ t.compareSelections }}</button>
+                            </div>
                         <div v-if="results">
                             <div class="bg-white p-6 rounded-lg shadow-sm">
-                                <h3 class="text-xl font-bold mb-4 text-center">Resultados de la Comparación</h3>
+                                <h3 class="text-xl font-bold mb-4 text-center">{{ t.comparisonResultsTitle }}</h3>
                                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                                     <div class="lg:col-span-3">
                                         <table class="w-full text-sm text-left">
                                             <thead class="bg-slate-50 text-slate-600">
-                                                <tr><th class="p-3 font-semibold rounded-tl-lg">Nivel de Actividad</th><th class="p-3 font-semibold text-center">{{ results.setA.name }}</th><th class="p-3 font-semibold text-center">{{ results.setB.name }}</th><th class="p-3 font-semibold text-center rounded-tr-lg">Diferencia</th></tr>
+                                                <tr><th class="p-3 font-semibold rounded-tl-lg">{{ t.activityLevel }}</th><th class="p-3 font-semibold text-center">{{ results.setA.name }}</th><th class="p-3 font-semibold text-center">{{ results.setB.name }}</th><th class="p-3 font-semibold text-center rounded-tr-lg">{{ t.difference }}</th></tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-for="(label, i) in results.labels" class="border-b border-border-color"><td class="p-3 font-medium">{{ label }}</td><td class="p-3 text-center text-lg font-semibold text-primary">{{ results.setA.counts[i].toLocaleString('es-CL') }}</td><td class="p-3 text-center text-lg font-semibold text-orange-600">{{ results.setB.counts[i].toLocaleString('es-CL') }}</td><td class="p-3 text-center"><span class="font-bold rounded-full px-2.5 py-1 text-xs" :class="getDiffClass(results.setB.counts[i] - results.setA.counts[i])">{{ (results.setB.counts[i] - results.setA.counts[i]) > 0 ? '+' : '' }}{{ (results.setB.counts[i] - results.setA.counts[i]).toLocaleString('es-CL') }}</span></td></tr>
+                                                <tr v-for="(label, i) in results.labels" class="border-b border-border-color"><td class="p-3 font-medium">{{ label }}</td><td class="p-3 text-center text-lg font-semibold text-primary">{{ results.setA.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center text-lg font-semibold text-orange-600">{{ results.setB.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center"><span class="font-bold rounded-full px-2.5 py-1 text-xs" :class="getDiffClass(results.setB.counts[i] - results.setA.counts[i])">{{ (results.setB.counts[i] - results.setA.counts[i]) > 0 ? '+' : '' }}{{ (results.setB.counts[i] - results.setA.counts[i]).toLocaleString(t.locale) }}</span></td></tr>
                                             </tbody>
-                                            <tfoot class="bg-slate-50"><tr class="font-bold text-slate-800"><td class="p-3 rounded-bl-lg">Total Editores</td><td class="p-3 text-center text-lg">{{ results.setA.counts.reduce((a,b)=>a+b,0).toLocaleString('es-CL') }}</td><td class="p-3 text-center text-lg">{{ results.setB.counts.reduce((a,b)=>a+b,0).toLocaleString('es-CL') }}</td><td class="p-3 text-center rounded-br-lg"><span class="font-bold rounded-full px-2.5 py-1 text-sm" :class="getDiffClass(results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0))">{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)) > 0 ? '+' : '' }}{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)).toLocaleString('es-CL') }}</span></td></tr></tfoot>
+                                            <tfoot class="bg-slate-50"><tr class="font-bold text-slate-800"><td class="p-3 rounded-bl-lg">{{ t.totalEditors }}</td><td class="p-3 text-center text-lg">{{ results.setA.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}</td><td class="p-3 text-center text-lg">{{ results.setB.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}</td><td class="p-3 text-center rounded-br-lg"><span class="font-bold rounded-full px-2.5 py-1 text-sm" :class="getDiffClass(results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0))">{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)) > 0 ? '+' : '' }}{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)).toLocaleString(t.locale) }}</span></td></tr></tfoot>
                                         </table>
                                     </div>
                                     <div class="lg:col-span-2 flex flex-col justify-center"><div class="h-64"><canvas ref="chartCanvas"></canvas></div></div>
