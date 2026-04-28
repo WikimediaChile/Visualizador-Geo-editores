@@ -130,10 +130,22 @@
                 <stats-panel id="stats-panel-tour" :stats="stats" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
                 <filters-panel id="filters-panel-tour" :filters="filters" :t="t" @apply="applyFilters" @clear="clearFilters" @export="exportData" @open-compare="openComparisonModal" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 1 }"></filters-panel>
                 <div v-if="filteredData.length > 0" class="space-y-8">
-                    <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
-                    <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
-                    <results-table id="results-table-tour" :headers="headers" :data="paginatedData" :current-page="currentPage" :total-pages="totalPages" :header-translations="headerTranslations" @page-changed="changePage" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 4 }"></results-table>
-                </div>
+                    <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
+                    <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
+                    <results-table
+                        id="results-table-tour"
+                        :headers="headers"
+                        :data="paginatedData"
+                        :current-page="currentPage"
+                        :total-pages="totalPages"
+                        :header-translations="headerTranslations"
+                        :t="t"
+                        :is-open="isResultsTableOpen"
+                        @toggle-table="isResultsTableOpen = !isResultsTableOpen"
+                        @page-changed="changePage"
+                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 4 }">
+                    </results-table>
+                    </div>
                 <div v-if="filteredData.length === 0" class="card text-center py-12">
                      <i class="fas fa-search fa-2x text-slate-400 mb-4"></i>
                       <p class="text-slate-600">{{ t.noResults }}</p>
@@ -158,7 +170,7 @@
 
         <!-- Tutorial -->
         <div v-if="tutorial.active" class="tutorial-overlay"></div>
-        <div v-if="tutorial.active && currentTutorialStep" class="tutorial-popover" :style="tutorial.position"><p class="text-slate-700 mb-6 text-lg">{{ currentTutorialStep.text }}</p><div class="flex justify-between items-center"><span class="text-sm font-medium text-slate-500">{{ tutorial.step + 1 }} / {{ tutorialSteps.length }}</span><div><button @click="endTutorial" class="btn btn-secondary !py-1 !px-3 mr-2">Omitir</button><button @click="nextTutorialStep" class="btn btn-primary !py-1 !px-3">{{ tutorial.step === tutorialSteps.length - 1 ? 'Finalizar' : 'Siguiente' }}<i class="fas fa-arrow-right ml-2"></i></button></div></div></div>
+        <div v-if="tutorial.active && currentTutorialStep" class="tutorial-popover" :style="tutorial.position"><p class="text-slate-700 mb-6 text-lg">{{ currentTutorialStep.text }}</p><div class="flex justify-between items-center"><span class="text-sm font-medium text-slate-500">{{ tutorial.step + 1 }} / {{ tutorialSteps.length }}</span><div><button @click="endTutorial" class="btn btn-secondary !py-1 !px-3 mr-2">{{ t.skip }}</button><button @click="nextTutorialStep" class="btn btn-primary !py-1 !px-3">{{ tutorial.step === tutorialSteps.length - 1 ? t.finish : t.next }}<i class="fas fa-arrow-right ml-2"></i></button></div></div></div>
 
         <!-- Modal de Comparación -->
         <comparison-modal :show="isComparisonModalOpen" :filters="filters" :results="comparisonResults" @close="closeComparisonModal" @compare="runComparison"></comparison-modal>
@@ -212,9 +224,46 @@ const app = createApp({
                 selectWikis: 'Seleccionar Wikis...',
                 selectCountries: 'Seleccionar Países...',
                 compareData: 'Comparar datos',
+                search: 'Buscar...',
+                selectedSingular: 'seleccionado',
+                selectedPlural: 'seleccionados',
+                noDropdownResults: 'No hay resultados',
+                locale: 'es-CL',
+                timeChartTitle: 'Editores por Nivel de Actividad a lo Largo del Tiempo',
+                activityChartTitle: 'Total Editores por Nivel de Actividad',
+                editors: 'Editores',
+                editorsLowercase: 'editores',
+                activityLevel1to4: '1 a 4 ediciones',
+                activityLevel5to99: '5 a 99 ediciones',
+                activityLevel100plus: '100 o más ediciones',
+                activityLevel1to4Short: '1 a 4',
+                activityLevel5to99Short: '5 a 99',
+                activityLevel100plusShort: '100+',
+                resultsTitle: 'Resultados',
+                recordsOnThisPage: 'registros en esta página',
+                page: 'Página',
+                of: 'de',
+                showTable: 'Mostrar tabla',
+                hideTable: 'Ocultar tabla',
+                tableHeaderMonth: 'Mes',
+                tableHeaderWiki: 'Proyecto Wiki',
+                tableHeaderCountry: 'País',
+                tableHeaderUserId: 'ID Usuario',
+                tableHeaderUserName: 'Usuario',
+                tableHeaderEditCount: 'Ediciones',
+                tableHeaderRegistration: 'Registro',
+                tableHeaderActivityLevel: 'Nivel Actividad',
                 footerDevelopedBy: 'Desarrollado por Wikimedia Chile.',
                 footerDataSource: 'Los datos son obtenidos de conjuntos de datos públicos de Wikimedia Analytics.',
                 footerRights: 'CC BY-SA 4.0.',
+                skip: 'Omitir',
+                next: 'Siguiente',
+                finish: 'Finalizar',
+                tutorialStats: 'Aquí tienes un resumen general de los datos cargados.',
+                tutorialFilters: 'Usa estos controles para segmentar los datos. El botón de balanza abre el comparador.',
+                tutorialTimeChart: 'Este gráfico de líneas muestra la evolución de los editores a lo largo del tiempo.',
+                tutorialActivityChart: 'Este gráfico de barras te da una vista rápida del total de editores en cada categoría.',
+                tutorialResultsTable: 'Finalmente, aquí puedes ver los datos en detalle. Usa la paginación para navegar.',
             },
             en: {
                 appTitle: 'Geo-editors Viewer',
@@ -251,9 +300,46 @@ const app = createApp({
                 selectWikis: 'Select Wikis...',
                 selectCountries: 'Select Countries...',
                 compareData: 'Compare data',
+                search: 'Search...',
+                selectedSingular: 'selected',
+                selectedPlural: 'selected',
+                noDropdownResults: 'No results',
+                locale: 'en-US',
+                timeChartTitle: 'Editors by Activity Level Over Time',
+                activityChartTitle: 'Total Editors by Activity Level',
+                editors: 'Editors',
+                editorsLowercase: 'editors',
+                activityLevel1to4: '1 to 4 edits',
+                activityLevel5to99: '5 to 99 edits',
+                activityLevel100plus: '100 or more edits',
+                activityLevel1to4Short: '1 to 4',
+                activityLevel5to99Short: '5 to 99',
+                activityLevel100plusShort: '100+',
+                resultsTitle: 'Results',
+                recordsOnThisPage: 'records on this page',
+                page: 'Page',
+                of: 'of',
+                showTable: 'Show table',
+                hideTable: 'Hide table',
+                tableHeaderMonth: 'Month',
+                tableHeaderWiki: 'Wiki Project',
+                tableHeaderCountry: 'Country',
+                tableHeaderUserId: 'User ID',
+                tableHeaderUserName: 'Username',
+                tableHeaderEditCount: 'Edits',
+                tableHeaderRegistration: 'Registration',
+                tableHeaderActivityLevel: 'Activity Level',
                 footerDevelopedBy: 'Developed by Wikimedia Chile.',
                 footerDataSource: 'Data is obtained from public Wikimedia Analytics datasets.',
                 footerRights: 'CC BY-SA 4.0',
+                skip: 'Skip',
+                next: 'Next',
+                finish: 'Finish',
+                tutorialStats: 'Here you can see a general summary of the loaded data.',
+                tutorialFilters: 'Use these controls to segment the data. The scale button opens the comparison tool.',
+                tutorialTimeChart: 'This line chart shows how editors evolve over time.',
+                tutorialActivityChart: 'This bar chart gives you a quick view of the total number of editors in each category.',
+                tutorialResultsTable: 'Finally, here you can view the data in detail. Use pagination to browse it.',
             }
         };
 
@@ -265,6 +351,7 @@ const app = createApp({
         const isLoading = ref(false);
         const statusMessage = ref('');
         const currentPage = ref(1);
+        const isResultsTableOpen = ref(false);
         const ROWS_PER_PAGE = 20;
         const filters = reactive({
             file: '', year: 'all', wiki: [], country: [],
@@ -311,14 +398,14 @@ const app = createApp({
 
         // --- Lógica del Tutorial MEJORADA ---
         const tutorial = reactive({ active: false, step: 0, ran: false, position: { top: '15vh', left: '50%', transform: 'translateX(-50%)' } });
-        const tutorialSteps = [
-            { selector: '#stats-panel-tour', text: 'Aquí tienes un resumen general de los datos cargados.' },
-            { selector: '#filters-panel-tour', text: 'Usa estos controles para segmentar los datos. El botón de balanza abre el comparador.' },
-            { selector: '#time-chart-tour', text: 'Este gráfico de líneas muestra la evolución de los editores a lo largo del tiempo.' },
-            { selector: '#activity-chart-tour', text: 'Este gráfico de barras te da una vista rápida del total de editores en cada categoría.' },
-            { selector: '#results-table-tour', text: 'Finalmente, aquí puedes ver los datos en detalle. Usa la paginación para navegar.' },
-        ];
-        const currentTutorialStep = computed(() => tutorialSteps[tutorial.step]);
+        const tutorialSteps = computed(() => [
+            { selector: '#stats-panel-tour', text: t.value.tutorialStats },
+            { selector: '#filters-panel-tour', text: t.value.tutorialFilters },
+            { selector: '#time-chart-tour', text: t.value.tutorialTimeChart },
+            { selector: '#activity-chart-tour', text: t.value.tutorialActivityChart },
+            { selector: '#results-table-tour', text: t.value.tutorialResultsTable },
+        ]);
+        const currentTutorialStep = computed(() => tutorialSteps.value[tutorial.step]);
         
         const updateTutorialPosition = () => {
             if (!tutorial.active) return;
@@ -336,7 +423,7 @@ const app = createApp({
             tutorial.active = true;
             tutorial.step = 0;
             nextTick(() => {
-                const firstStep = tutorialSteps[0];
+                const firstStep = tutorialSteps.value[0];
                 const element = document.querySelector(firstStep.selector);
                 if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 updateTutorialPosition();
@@ -345,10 +432,10 @@ const app = createApp({
         const endTutorial = () => { tutorial.active = false; };
 
         const nextTutorialStep = () => {
-            if (tutorial.step < tutorialSteps.length - 1) {
+            if (tutorial.step < tutorialSteps.value.length - 1) {
                 tutorial.step++;
                 nextTick(() => {
-                    const nextStep = tutorialSteps[tutorial.step];
+                    const nextStep = tutorialSteps.value[tutorial.step];
                     const element = document.querySelector(nextStep.selector);
                     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     updateTutorialPosition();
@@ -379,7 +466,7 @@ const app = createApp({
         const stats = computed(() => { if (allData.value.length === 0) return { totalRecords: '-', totalWikis: '-', totalCountries: '-', dateRange: '-' }; const months = [...new Set(allData.value.map(item => item._month).filter(Boolean))].sort(); return { totalRecords: allData.value.length.toLocaleString('es-CL'), totalWikis: [...new Set(allData.value.map(item => item.wiki_db))].length.toLocaleString('es-CL'), totalCountries: [...new Set(allData.value.map(item => item.country))].length.toLocaleString('es-CL'), dateRange: months.length ? `${months[0]} a ${months[months.length - 1]}` : '-' }; });
         const totalPages = computed(() => Math.ceil(filteredData.value.length / ROWS_PER_PAGE) || 1);
         const paginatedData = computed(() => { const start = (currentPage.value - 1) * ROWS_PER_PAGE; return filteredData.value.slice(start, start + ROWS_PER_PAGE); });
-        const activityChartData = computed(() => { if (!filteredData.value.length) return null; const counts = { '1-4': 0, '5-99': 0, '100+': 0 }; filteredData.value.forEach(r => { const c = r._category || '0'; const editors = Number(r._editorsCount || 0); if (c === '1-4') counts['1-4'] += editors; else if (c === '5-99') counts['5-99'] += editors; else if (c === '100+') counts['100+'] += editors; }); return { labels: ['1 a 4', '5 a 99', '100+'], data: [counts['1-4'], counts['5-99'], counts['100+']] }; });
+        const activityChartData = computed(() => { if (!filteredData.value.length) return null; const counts = { '1-4': 0, '5-99': 0, '100+': 0 }; filteredData.value.forEach(r => { const c = r._category || '0'; const editors = Number(r._editorsCount || 0); if (c === '1-4') counts['1-4'] += editors; else if (c === '5-99') counts['5-99'] += editors; else if (c === '100+') counts['100+'] += editors; }); return { labels: [t.value.activityLevel1to4Short, t.value.activityLevel5to99Short, t.value.activityLevel100plusShort], data: [counts['1-4'], counts['5-99'], counts['100+']] }; });
         
         const editorsOverTimeChartData = computed(() => {
             if (!filteredData.value.length) return null;
@@ -415,9 +502,9 @@ const app = createApp({
             }
             
             const datasets = [
-                { label: '1 a 4 ediciones', data: d1, borderColor: '#3366cc', backgroundColor: '#3366cc', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
-                { label: '5 a 99 ediciones', data: d2, borderColor: '#f58d00', backgroundColor: '#f58d00', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
-                { label: '100 o más ediciones', data: d3, borderColor: '#00af89', backgroundColor: '#00af89', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
+                { label: t.value.activityLevel1to4, data: d1, borderColor: '#3366cc', backgroundColor: '#3366cc', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
+                { label: t.value.activityLevel5to99, data: d2, borderColor: '#f58d00', backgroundColor: '#f58d00', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
+                { label: t.value.activityLevel100plus, data: d3, borderColor: '#00af89', backgroundColor: '#00af89', tension: 0.2, pointRadius: 4, borderWidth: 2, fill: false, spanGaps: true },
             ];
             
             // Si solo hay un punto de datos, quitamos la tensión para que la línea sea recta y ocultamos el segundo punto.
@@ -438,19 +525,62 @@ const app = createApp({
         const applyFilters = (newFilters = filters) => { let data = allData.value.slice(); if (newFilters.file) data = data.filter(d => d.__fileName === newFilters.file); if (newFilters.year && newFilters.year !== 'all') data = data.filter(d => (d._month || '').startsWith(newFilters.year)); if (newFilters.wiki && newFilters.wiki.length) data = data.filter(d => newFilters.wiki.includes(d.wiki_db)); if (newFilters.country && newFilters.country.length) data = data.filter(d => newFilters.country.includes(d.country)); filteredData.value = data; currentPage.value = 1; };
         const clearFilters = () => { filters.file = ''; filters.year = 'all'; filters.wiki = []; filters.country = []; applyFilters(); };
         const changePage = (page) => { if (page > 0 && page <= totalPages.value) currentPage.value = page; };
-        const exportData = () => { if (filteredData.value.length === 0) return; const headerRow = headers.value.map(h => headerTranslations[h] || h).join(','); const dataRows = filteredData.value.map(row => headers.value.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')); const csvContent = [headerRow, ...dataRows].join('\n'); const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'datos_geoeditores_wikimedia_chile.csv'; link.click(); URL.revokeObjectURL(link.href); };
-        const headerTranslations = { 'month': 'Mes', 'wiki_db': 'Proyecto Wiki', 'country': 'País', 'user_id': 'ID Usuario', 'user_name': 'Usuario', 'user_edit_count': 'Ediciones', 'user_registration': 'Registro', 'activity_level': 'Nivel Actividad' };
+        const exportData = () => { if (filteredData.value.length === 0) return; const headerRow = headers.value.map(h => headerTranslations.value[h] || h).join(','); const dataRows = filteredData.value.map(row => headers.value.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')); const csvContent = [headerRow, ...dataRows].join('\n'); const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'datos_geoeditores_wikimedia_chile.csv'; link.click(); URL.revokeObjectURL(link.href); };
+        const headerTranslations = computed(() => ({
+            'month': t.value.tableHeaderMonth,
+            'wiki_db': t.value.tableHeaderWiki,
+            'country': t.value.tableHeaderCountry,
+            'user_id': t.value.tableHeaderUserId,
+            'user_name': t.value.tableHeaderUserName,
+            'user_edit_count': t.value.tableHeaderEditCount,
+            'user_registration': t.value.tableHeaderRegistration,
+            'activity_level': t.value.tableHeaderActivityLevel
+        }));
 
-        return { allData, filteredData, headers, isLoading, statusMessage, currentPage, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
+        return { allData, filteredData, headers, isLoading, statusMessage, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
     }
 });
 
 // --- Componentes ---
 app.component('searchable-multiselect', {
-    props: { modelValue: { type: Array, default: () => [] }, options: { type: Array, default: () => [] }, placeholder: { type: String, default: 'Seleccionar...' } },
+    props: {
+    modelValue: { type: Array, default: () => [] },
+    options: { type: Array, default: () => [] },
+    placeholder: { type: String, default: 'Seleccionar...' },
+    t: { type: Object, default: () => ({}) }
+},
     emits: ['update:modelValue'],
     setup(props, { emit }) { const isOpen = ref(false), searchTerm = ref(''), root = ref(null); const filteredOptions = computed(() => { if (!searchTerm.value) return props.options; return props.options.filter(opt => opt.toLowerCase().includes(searchTerm.value.toLowerCase())); }); const toggleOption = (option) => { const newValue = [...props.modelValue]; const i = newValue.indexOf(option); if (i > -1) newValue.splice(i,1); else newValue.push(option); emit('update:modelValue', newValue); }; const handleClickOutside = (e) => { if (root.value && !root.value.contains(e.target)) isOpen.value = false; }; onMounted(() => document.addEventListener('click', handleClickOutside)); onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside)); return { isOpen, searchTerm, root, filteredOptions, toggleOption }; },
-    template: `<div class="relative" ref="root"><div @click="isOpen = !isOpen" class="filter-input flex justify-between items-center cursor-pointer"><span class="text-slate-500" v-if="modelValue.length === 0">{{ placeholder }}</span><span class="font-medium" v-else>{{ modelValue.length }} seleccionado(s)</span><i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" :class="{'rotate-180': isOpen}"></i></div><div v-if="isOpen" class="absolute top-full left-0 right-0 mt-2 bg-white border border-border-color rounded-lg shadow-lg z-50"><div class="p-2"><input type="text" v-model="searchTerm" placeholder="Buscar..." class="filter-input w-full text-sm"></div><ul class="max-h-60 overflow-y-auto p-2"><li v-for="option in filteredOptions" :key="option" @click.stop="toggleOption(option)" class="flex items-center p-2 rounded-md hover:bg-slate-100 cursor-pointer"><input type="checkbox" :checked="modelValue.includes(option)" class="mr-3 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"><span class="text-sm text-slate-700">{{ option }}</span></li><li v-if="filteredOptions.length === 0" class="p-2 text-sm text-slate-500 text-center">No hay resultados</li></ul></div></div>`
+    template: `
+    <div class="relative" ref="root">
+        <div @click="isOpen = !isOpen" class="filter-input flex justify-between items-center cursor-pointer">
+            <span class="text-slate-500" v-if="modelValue.length === 0">{{ placeholder }}</span>
+            <span class="font-medium" v-else>{{ modelValue.length }} {{ modelValue.length === 1 ? t.selectedSingular : t.selectedPlural }}</span>
+            <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" :class="{'rotate-180': isOpen}"></i>
+        </div>
+
+        <div v-if="isOpen" class="absolute top-full left-0 right-0 mt-2 bg-white border border-border-color rounded-lg shadow-lg z-50">
+            <div class="p-2">
+                <input type="text" v-model="searchTerm" :placeholder="t.search" class="filter-input w-full text-sm">
+            </div>
+
+            <ul class="max-h-60 overflow-y-auto p-2">
+                <li
+                    v-for="option in filteredOptions"
+                    :key="option"
+                    @click.stop="toggleOption(option)"
+                    class="flex items-center p-2 rounded-md hover:bg-slate-100 cursor-pointer">
+                    <input type="checkbox" :checked="modelValue.includes(option)" class="mr-3 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                    <span class="text-sm text-slate-700">{{ option }}</span>
+                </li>
+
+                <li v-if="filteredOptions.length === 0" class="p-2 text-sm text-slate-500 text-center">
+                    {{ t.noDropdownResults }}
+                </li>
+            </ul>
+        </div>
+    </div>
+`
 });
 
 // NUEVO: Componente Searchable Select (para selección única con buscador)
@@ -529,7 +659,8 @@ app.component('filters-panel', {
                     <searchable-multiselect
                         v-model="localFilters.wiki"
                         :options="filters.options.wiki"
-                        :placeholder="t.selectWikis">
+                        :placeholder="t.selectWikis"
+                        :t="t">
                     </searchable-multiselect>
                 </div>
 
@@ -538,7 +669,8 @@ app.component('filters-panel', {
                     <searchable-multiselect
                         v-model="localFilters.country"
                         :options="filters.options.country"
-                        :placeholder="t.selectCountries">
+                        :placeholder="t.selectCountries"
+                        :t="t">
                     </searchable-multiselect>
                 </div>
             </div>
@@ -568,23 +700,90 @@ app.component('filters-panel', {
 });
 
 app.component('editors-over-time-chart', {
-    props: ['chartData'],
-    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); chartInstance = new Chart(ctx, { type: 'line', data: { labels: props.chartData.labels, datasets: props.chartData.datasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${c.dataset.label}: ${c.raw.toLocaleString('es-CL')} editores` } }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d' } }, x: { grid: { display: false }, ticks: { color: '#54595d', maxRotation: 45, minRotation: 45 } } }, interaction: { intersect: false, mode: 'index' } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
-    template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">Editores por Nivel de Actividad a lo Largo del Tiempo</h2></div><div class="card-body"><div class="h-96"><canvas ref="chartCanvas"></canvas></div></div></div>`
+    props: ['chartData', 't'],
+    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); chartInstance = new Chart(ctx, { type: 'line', data: { labels: props.chartData.labels, datasets: props.chartData.datasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${c.dataset.label}: ${c.raw.toLocaleString(props.t.locale)} ${props.t.editorsLowercase}` } }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d' } }, x: { grid: { display: false }, ticks: { color: '#54595d', maxRotation: 45, minRotation: 45 } } }, interaction: { intersect: false, mode: 'index' } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
+    template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.timeChartTitle }}</h2></div><div class="card-body"><div class="h-96"><canvas ref="chartCanvas"></canvas></div></div></div>`
 });
 
 app.component('activity-chart', {
-    props: ['chartData'],
-    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `Editores: ${c.raw.toLocaleString('es-CL')}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString('es-CL') : '', color: '#54595d', font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d', callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: '#54595d' } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
-    template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">Total Editores por Nivel de Actividad</h2></div><div class="card-body"><div class="h-80"><canvas ref="chartCanvas"></canvas></div></div></div>`
+    props: ['chartData', 't'],
+    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${props.t.editors}: ${c.raw.toLocaleString(props.t.locale)}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '', color: '#54595d', font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d', callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: '#54595d' } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
+    template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.activityChartTitle }}</h2></div><div class="card-body"><div class="h-80"><canvas ref="chartCanvas"></canvas></div></div></div>`
 });
 
 app.component('results-table', {
-    props: ['headers', 'data', 'currentPage', 'totalPages', 'headerTranslations'],
-    emits: ['page-changed'],
+    props: ['headers', 'data', 'currentPage', 'totalPages', 'headerTranslations', 't', 'isOpen'],
+    emits: ['page-changed', 'toggle-table'],
     setup() { const getBadgeClass = (level) => { if (!level) return 'badge-gray'; if (typeof level === 'string' && (level.includes('1-4') || level.includes('1 a 4'))) return 'badge-blue'; if (typeof level === 'string' && (level.includes('5-') || level.includes('5 a 99') || level.includes('5-99'))) return 'badge-green'; if (typeof level === 'string' && (level.includes('100') || level.includes('100+'))) return 'badge-orange'; return 'badge-gray'; }; return { getBadgeClass }; },
-    template: `<div class="card"><div class="card-header flex justify-between items-center"><h2 class="text-xl font-bold">Resultados</h2><span class="font-semibold text-primary">{{ data.length }} registros en esta página</span></div><div class="card-body"><div class="table-container overflow-x-auto"><table class="w-full"><thead><tr><th v-for="h in headers" class="text-left py-2">{{ headerTranslations[h] || h }}</th></tr></thead><tbody><tr v-for="row in data" :key="row.__fileName + (row.user_id||'') + (row.user_name||'')"><td v-for="header in headers" class="py-1 align-top"><span v-if="header === 'activity_level'"><span v-if="row.activity_level" class="badge" :class="getBadgeClass(row.activity_level)">{{ row.activity_level }}</span><span v-else>{{ row[header] }}</span></span><span v-else>{{ row[header] }}</span></td></tr></tbody></table></div><div class="mt-4 flex justify-between items-center"><div class="text-sm text-slate-600">Página {{ currentPage }} de {{ totalPages }}</div><div class="flex gap-2"><button @click="$emit('page-changed', currentPage - 1)" :disabled="currentPage === 1" class="btn btn-secondary !py-1 !px-3"><i class="fas fa-chevron-left"></i></button><button @click="$emit('page-changed', currentPage + 1)" :disabled="currentPage === totalPages" class="btn btn-secondary !py-1 !px-3"><i class="fas fa-chevron-right"></i></button></div></div></div></div>`
-});
+    template: `
+        <div class="card">
+            <div class="card-header flex justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold">{{ t.resultsTitle }}</h2>
+                    <span class="font-semibold text-primary">{{ data.length }} {{ t.recordsOnThisPage }}</span>
+                </div>
+
+                <button @click="$emit('toggle-table')" class="btn btn-secondary !py-1 !px-3">
+                    <i class="fas" :class="isOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    {{ isOpen ? t.hideTable : t.showTable }}
+                </button>
+            </div>
+
+            <div v-if="isOpen" class="card-body">
+                <div class="table-container overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th v-for="h in headers" class="text-left py-2">
+                                    {{ headerTranslations[h] || h }}
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr v-for="row in data" :key="row.__fileName + (row.user_id||'') + (row.user_name||'')">
+                                <td v-for="header in headers" class="py-1 align-top">
+                                    <span v-if="header === 'activity_level'">
+                                        <span
+                                            v-if="row.activity_level"
+                                            class="badge"
+                                            :class="getBadgeClass(row.activity_level)">
+                                            {{ row.activity_level }}
+                                        </span>
+                                        <span v-else>{{ row[header] }}</span>
+                                    </span>
+                                    <span v-else>{{ row[header] }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-slate-600">
+                        {{ t.page }} {{ currentPage }} {{ t.of }} {{ totalPages }}
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button
+                            @click="$emit('page-changed', currentPage - 1)"
+                            :disabled="currentPage === 1"
+                            class="btn btn-secondary !py-1 !px-3">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+
+                        <button
+                            @click="$emit('page-changed', currentPage + 1)"
+                            :disabled="currentPage === totalPages"
+                            class="btn btn-secondary !py-1 !px-3">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+    });
 
 // Componente del Modal de Comparación Mejorado
 app.component('comparison-modal', {
