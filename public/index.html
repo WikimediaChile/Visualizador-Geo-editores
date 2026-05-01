@@ -136,7 +136,7 @@
                 <div v-if="filteredData.length > 0" class="space-y-8">
                     <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
                     <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
-                    <heatmap-chart id="heatmap-tour" :heatmap-data="heatmapData"></heatmap-chart>
+                    <heatmap-chart id="heatmap-tour" :heatmap-data="heatmapData" :t="t"></heatmap-chart>
                     <results-table
                         id="results-table-tour"
                         :headers="headers"
@@ -243,6 +243,7 @@ const app = createApp({
                 locale: 'es-CL',
                 timeChartTitle: 'Editores por Nivel de Actividad a lo Largo del Tiempo',
                 activityChartTitle: 'Total Editores por Nivel de Actividad',
+                heatMapChartTitle: 'Editores por mes',
                 editors: 'Editores',
                 editorsLowercase: 'editores',
                 activityLevel1to4: '1 a 4 ediciones',
@@ -342,6 +343,7 @@ const app = createApp({
                 locale: 'en-US',
                 timeChartTitle: 'Editors by Activity Level Over Time',
                 activityChartTitle: 'Total Editors by Activity Level',
+                heatMapChartTitle: 'Editors per month',
                 editors: 'Editors',
                 editorsLowercase: 'editors',
                 activityLevel1to4: '1 to 4 edits',
@@ -809,7 +811,7 @@ app.component('activity-chart', {
 });
 
 app.component('heatmap-chart', {
-    props: ['heatmapData'],
+    props: ['heatmapData', 't'],
     setup(props) {
         const getIntensity = (value) => {
             const min = props.heatmapData.min;
@@ -839,7 +841,7 @@ app.component('heatmap-chart', {
     },
     template: `
         <div class="card mb-8">
-            <div class="card-header"><h2 class="text-xl font-bold">Editores por mes</h2></div>
+            <div class="card-header"><h2 class="text-xl font-bold">{{t.heatMapChartTitle}}</h2></div>
             <div class="card-body overflow-x-auto">
                 <div class="min-w-[600px]">
                     <div class="grid grid-cols-13 gap-1 mb-2">
