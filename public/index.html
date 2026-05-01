@@ -41,6 +41,7 @@
         .filter-input { background: white; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.625rem 1rem; color: var(--text-dark); width: 100%; transition: all 0.2s; }
         .filter-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(51, 102, 204, 0.2); }
         [v-cloak] { display: none; }
+        .grid-cols-13 { grid-template-columns: 80px repeat(12, minmax(0, 1fr)); }
 
         /* Estilos para Tutorial y Modal */
         .tutorial-overlay, .modal-overlay {
@@ -135,6 +136,7 @@
                 <div v-if="filteredData.length > 0" class="space-y-8">
                     <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
                     <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
+                    <heatmap-chart id="heatmap-tour" :heatmap-data="heatmapData"></heatmap-chart>
                     <results-table
                         id="results-table-tour"
                         :headers="headers"
@@ -578,6 +580,37 @@ const app = createApp({
         });
 
         const fetchAllDataFiles = async () => { isLoading.value = true; statusMessage.value = t.value.statusFetchingFiles; hasError.value = false; allData.value = []; headers.value = []; try { const response = await fetch('/api/files'); if (!response.ok) throw new Error(`El servidor respondió con un error: ${response.statusText}`); const fileList = await response.json(); if (fileList.length === 0) throw new Error(t.value.errorNoFilesFound); let loadedCount = 0; const BATCH_SIZE = 5; for (let i = 0; i < fileList.length; i += BATCH_SIZE) { const batch = fileList.slice(i, i + BATCH_SIZE); const promises = batch.map(fileName => fetch(`/api/file/${fileName}`).then(res => { if (!res.ok) throw new Error(`${t.value.errorCouldNotDownload} ${fileName}`); return res.text(); }).then(text => ({ text, name: fileName })) ); const results = await Promise.all(promises); results.forEach(res => { if (res.text) allData.value.push(...parseTSV(res.text, res.name)); }); loadedCount += batch.length; statusMessage.value = `${t.value.statusProcessing} ${loadedCount} ${t.value.of} ${fileList.length} ${t.value.filesLowercase}...`; } normalizeRecords(); populateFilters(); applyFilters(); if (!tutorial.ran) { setTimeout(startTutorial, 500); } } catch (error) { console.error("Error detallado:", error); statusMessage.value = `${t.value.error}: ${error.message}`; hasError.value = true; } finally { isLoading.value = false; } };
+        const heatmapData = computed(() => {
+            if (!filteredData.value.length) return null;
+            
+            const matrix = {};
+            const years = new Set();
+
+            filteredData.value.forEach(r => {
+                if (!r._month) return;
+                const [year, month] = r._month.split('-'); // Asumiendo formato YYYY-MM
+                if (!year || !month) return;
+                
+                years.add(year);
+                if (!matrix[year]) matrix[year] = Array(12).fill(null);
+                
+                const monthIdx = parseInt(month) - 1;
+                matrix[year][monthIdx] = (matrix[year][monthIdx] || 0) + Number(r._editorsCount || 0);
+            });
+
+            const allValues = Object.values(matrix).flat().filter(v => v !== null);
+            const globalMax = allValues.length ? Math.max(...allValues) : 0;
+            const globalMin = allValues.length ? Math.min(...allValues) : 0;
+
+            return {
+                years: Array.from(years).sort(),
+                months: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                data: matrix,
+                max: globalMax,
+                min: globalMin
+            };
+        });
+
         const parseTSV = (text, fileName) => { const lines = text.trim().split('\n'); if (lines.length < 2) return []; if (headers.value.length === 0) headers.value = lines[0].split('\t').map(h => h.trim()); return lines.slice(1).map(line => { const values = line.split('\t'), row = {}; headers.value.forEach((h, i) => row[h] = values[i] ? values[i].trim() : ''); row.__fileName = fileName; return row; }); };
         const normalizeRecords = () => { const monthKey = findHeaderKey(['month','mes','date','fecha']); const editsKey = findHeaderKey(['edit','edicion','edit_count','user_edit_count','editcount','ediciones']); const activityKey = findHeaderKey(['activity','activity_level','nivel','nivel_actividad','activity-level']); const editorsCountKey = findHeaderKey(['editors','editor_count','editors_count','count','editors_total','editors_total','editors_agg','editors_aggregated','editors_per_month','editor_count']); allData.value = allData.value.map(r => { const copy = { ...r }; const rawMonth = (monthKey && copy[monthKey]) ? copy[monthKey] : (copy.month || copy.date || copy.mes || ''); copy._month = normMonth(rawMonth); const rawEdits = (editsKey && copy[editsKey]) ? copy[editsKey] : (copy.user_edit_count || copy.edit_count || copy.ediciones || ''); copy._edits = parseEdits(rawEdits); const rawActivity = (activityKey && copy[activityKey]) ? copy[activityKey] : (copy.activity_level || ''); let editorsCount = 0; if (editorsCountKey && copy[editorsCountKey]) editorsCount = parseNumber(copy[editorsCountKey]); if (!editorsCount) { if (copy.user_id || copy.user_name || copy.user) editorsCount = 1; } copy._editorsCount = editorsCount; copy._category = detectCategory(rawActivity, copy._edits); return copy; }); };
         const populateFilters = () => { const data = allData.value; filters.options.file = [...new Set(data.map(d => d.__fileName))].sort((a,b) => b.localeCompare(a)); filters.options.wiki = [...new Set(data.map(d => d.wiki_db))].sort(); filters.options.country = [...new Set(data.map(d => d.country))].sort(); const years = [...new Set(data.map(d => (d._month || '').toString().slice(0,4)))].filter(Boolean).sort((a,b) => b - a); filters.options.year = ['all', ...years]; };
@@ -596,7 +629,7 @@ const app = createApp({
             'activity_level': t.value.tableHeaderActivityLevel
         }));
 
-        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t };
+        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t, heatmapData };
     }
 });
 
@@ -773,6 +806,69 @@ app.component('activity-chart', {
     props: ['chartData', 't'],
     setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${props.t.editors}: ${c.raw.toLocaleString(props.t.locale)}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '', color: '#54595d', font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d', callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: '#54595d' } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
     template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.activityChartTitle }}</h2></div><div class="card-body"><div class="h-80"><canvas ref="chartCanvas"></canvas></div></div></div>`
+});
+
+app.component('heatmap-chart', {
+    props: ['heatmapData'],
+    setup(props) {
+        const getIntensity = (value) => {
+            const min = props.heatmapData.min;
+            const max = props.heatmapData.max;
+
+            // si todos los valores son iguales
+            if (max === min) return 1;
+
+            const normalized = (value - min) / (max - min);
+            const intensity =  normalized * 0.9 + 0.1
+            return intensity
+        };
+
+        const getBackgroundColor = (value) => {
+            // meses sin datos
+            if (value === null) return '#f8f9fa';
+            const intensity = getIntensity(value);
+
+            return `rgba(51, 102, 204, ${intensity.toFixed(2)})`
+        };
+
+        const getTextColor = (value) => {
+            return getIntensity(value) > 0.55 ? 'white' : 'black';
+        };
+
+        return {getBackgroundColor, getTextColor}
+    },
+    template: `
+        <div class="card mb-8">
+            <div class="card-header"><h2 class="text-xl font-bold">Editores por mes</h2></div>
+            <div class="card-body overflow-x-auto">
+                <div class="min-w-[600px]">
+                    <div class="grid grid-cols-13 gap-1 mb-2">
+                        <div class="text-xs font-bold text-slate-400">Año</div>
+                        <div v-for="m in heatmapData.months" class="text-xs font-bold text-center text-slate-500">{{m}}</div>
+                    </div>
+                    <div v-for="year in heatmapData.years" :key="year" class="grid grid-cols-13 gap-1 mb-1">
+                        <div class="text-sm font-bold flex items-center">{{year}}</div>
+                        <div v-for="(val, idx) in heatmapData.data[year]"
+                             class="h-10 rounded-sm flex items-center justify-center text-[10px] transition-all hover:ring-2 hover:ring-primary cursor-help"
+                             :style="{ backgroundColor: getBackgroundColor(val), color: getTextColor(val) }"
+                             :title="(val !== null) ? (year + '-' + (idx+1) + ': ' + val + ' editores') : 'sin datos'">
+                            {{ val !== null ? val : '' }}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-4 items-center text-xs text-slate-500">
+                    <span>Menos editores</span>
+                    <div class="flex gap-1">
+                        <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.1)"></div>
+                        <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.4)"></div>
+                        <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.7)"></div>
+                        <div class="w-4 h-4" style="background: rgba(51, 102, 204)"></div>
+                    </div>
+                    <span>Más editores</span>
+                </div>
+            </div>
+        </div>
+    `
 });
 
 app.component('results-table', {
