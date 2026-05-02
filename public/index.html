@@ -241,9 +241,14 @@ const app = createApp({
                 selectedPlural: 'seleccionados',
                 noDropdownResults: 'No hay resultados',
                 locale: 'es-CL',
-                timeChartTitle: 'Editores por Nivel de Actividad a lo Largo del Tiempo',
-                activityChartTitle: 'Total Editores por Nivel de Actividad',
+                timeChartTitle: 'Editores por nivel de actividad a lo largo del tiempo',
+                activityChartTitle: 'Total editores por nivel de actividad',
                 heatMapChartTitle: 'Editores por mes',
+                heatmapYear: 'Año',
+                heatmapNoData: 'sin datos',
+                heatmapLessEditors: 'Menos editores',
+                heatmapMoreEditors: 'Más editores',
+                heatmapMonths: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
                 editors: 'Editores',
                 editorsLowercase: 'editores',
                 activityLevel1to4: '1 a 4 ediciones',
@@ -341,9 +346,14 @@ const app = createApp({
                 selectedPlural: 'selected',
                 noDropdownResults: 'No results',
                 locale: 'en-US',
-                timeChartTitle: 'Editors by Activity Level Over Time',
-                activityChartTitle: 'Total Editors by Activity Level',
+                timeChartTitle: 'Editors by activity level over time',
+                activityChartTitle: 'Total editors by activity level',
                 heatMapChartTitle: 'Editors per month',
+                heatmapYear: 'Year',
+                heatmapNoData: 'no data',
+                heatmapLessEditors: 'Fewer editors',
+                heatmapMoreEditors: 'More editors',
+                heatmapMonths: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                 editors: 'Editors',
                 editorsLowercase: 'editors',
                 activityLevel1to4: '1 to 4 edits',
@@ -606,7 +616,7 @@ const app = createApp({
 
             return {
                 years: Array.from(years).sort(),
-                months: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                months: t.value.heatmapMonths,
                 data: matrix,
                 max: globalMax,
                 min: globalMin
@@ -845,7 +855,7 @@ app.component('heatmap-chart', {
             <div class="card-body overflow-x-auto">
                 <div class="min-w-[600px]">
                     <div class="grid grid-cols-13 gap-1 mb-2">
-                        <div class="text-xs font-bold text-slate-400">Año</div>
+                        <div class="text-xs font-bold text-slate-400">{{ t.heatmapYear }}</div>
                         <div v-for="m in heatmapData.months" class="text-xs font-bold text-center text-slate-500">{{m}}</div>
                     </div>
                     <div v-for="year in heatmapData.years" :key="year" class="grid grid-cols-13 gap-1 mb-1">
@@ -853,20 +863,20 @@ app.component('heatmap-chart', {
                         <div v-for="(val, idx) in heatmapData.data[year]"
                              class="h-10 rounded-sm flex items-center justify-center text-[10px] transition-all hover:ring-2 hover:ring-primary cursor-help"
                              :style="{ backgroundColor: getBackgroundColor(val), color: getTextColor(val) }"
-                             :title="(val !== null) ? (year + '-' + (idx+1) + ': ' + val + ' editores') : 'sin datos'">
-                            {{ val !== null ? val : '' }}
+                             :title="(val !== null) ? (year + '-' + (idx+1) + ': ' + val.toLocaleString(t.locale) + ' ' + t.editorsLowercase) : t.heatmapNoData">
+                             {{ val !== null ? val.toLocaleString(t.locale) : '' }}
                         </div>
                     </div>
                 </div>
                 <div class="mt-4 flex gap-4 items-center text-xs text-slate-500">
-                    <span>Menos editores</span>
+                    <span>{{ t.heatmapLessEditors }}</span>
                     <div class="flex gap-1">
                         <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.1)"></div>
                         <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.4)"></div>
                         <div class="w-4 h-4" style="background: rgba(51, 102, 204, 0.7)"></div>
                         <div class="w-4 h-4" style="background: rgba(51, 102, 204)"></div>
                     </div>
-                    <span>Más editores</span>
+                    <span>{{ t.heatmapMoreEditors }}</span>
                 </div>
             </div>
         </div>
