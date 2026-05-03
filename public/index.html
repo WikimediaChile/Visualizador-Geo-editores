@@ -85,13 +85,35 @@
                         <p class="text-sm text-slate-500 hidden md:block">{{ t.appSubtitle }}</p>
                     </div>
                 </div>
-                <select
-                    v-model="currentLang"
-                    class="filter-input max-w-[120px] text-sm"
-                    :aria-label="t.languageSelectorLabel">
-                    <option value="es">{{ t.languageSpanish }}</option>
-                    <option value="en">{{ t.languageEnglish }}</option>
-                </select>
+                <div class="flex items-center gap-3">
+                    <div v-if="allData.length > 0" class="card p-1 flex gap-1">
+                        <button
+                            @click="currentView = 'explore'"
+                            class="btn !py-1.5 !px-3 text-sm"
+                            :class="currentView === 'explore' ? 'btn-primary' : 'btn-secondary'">
+                            {{ t.tabExplore }}
+                        </button>
+                
+                        <button
+                            id="compare-tab-tour"
+                            @click="currentView = 'compare'"
+                            class="btn !py-1.5 !px-3 text-sm"
+                            :class="[
+                                currentView === 'compare' ? 'btn-primary' : 'btn-secondary',
+                                tutorial.active && tutorial.step === 6 ? 'highlighted-element' : ''
+                            ]">
+                            {{ t.tabCompare }}
+                        </button>
+                    </div>
+                
+                    <select
+                        v-model="currentLang"
+                        class="filter-input max-w-[120px] text-sm"
+                        :aria-label="t.languageSelectorLabel">
+                        <option value="es">{{ t.languageSpanish }}</option>
+                        <option value="en">{{ t.languageEnglish }}</option>
+                    </select>
+                </div>
             </div>
         </header>
 
@@ -131,12 +153,19 @@
             </div>
             
             <div v-else class="space-y-8">
-                <stats-panel id="stats-panel-tour" :stats="stats" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
+            
+                <div v-if="currentView === 'explore'" class="space-y-8">
+                    <stats-panel id="stats-panel-tour" :stats="stats" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
                 <filters-panel id="filters-panel-tour" :filters="filters" :t="t" @apply="applyFilters" @clear="clearFilters" @export="exportData" @open-compare="openComparisonModal" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 1 }"></filters-panel>
                 <div v-if="filteredData.length > 0" class="space-y-8">
                     <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
                     <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
-                    <heatmap-chart id="heatmap-tour" :heatmap-data="heatmapData" :t="t"></heatmap-chart>
+                    <heatmap-chart
+                        id="heatmap-tour"
+                        :heatmap-data="heatmapData"
+                        :t="t"
+                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 4 }">
+                    </heatmap-chart>
                     <results-table
                         id="results-table-tour"
                         :headers="headers"
@@ -148,12 +177,173 @@
                         :is-open="isResultsTableOpen"
                         @toggle-table="isResultsTableOpen = !isResultsTableOpen"
                         @page-changed="changePage"
-                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 4 }">
+                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 5 }">
                     </results-table>
                     </div>
                 <div v-if="filteredData.length === 0" class="card text-center py-12">
                      <i class="fas fa-search fa-2x text-slate-400 mb-4"></i>
                       <p class="text-slate-600">{{ t.noResults }}</p>
+                </div>
+                </div>
+                <div v-if="currentView === 'compare'" class="space-y-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="text-xl font-bold">{{ t.compareTabTitle }}</h2>
+                        </div>
+                
+                        <div class="card-body space-y-6">
+                            <p class="text-slate-600">{{ t.compareTabDescription }}</p>
+                
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="border-r-0 md:border-r border-border-color pr-0 md:pr-8">
+                                    <h3 class="font-bold text-lg mb-4 text-primary flex items-center">
+                                        <span class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm mr-3">A</span>
+                                        {{ t.selectionA }}
+                                    </h3>
+                
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.filterCountry }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setA.country"
+                                                :options="filters.options.country"
+                                                :placeholder="t.selectCountry"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.filterWiki }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setA.wiki"
+                                                :options="filters.options.wiki"
+                                                :placeholder="t.selectProject"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.fileMonth }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setA.file"
+                                                :options="filters.options.file"
+                                                :placeholder="t.selectFile"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                                    </div>
+                                </div>
+                
+                                <div>
+                                    <h3 class="font-bold text-lg mb-4 text-orange-600 flex items-center">
+                                        <span class="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm mr-3">B</span>
+                                        {{ t.selectionB }}
+                                    </h3>
+                
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.filterCountry }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setB.country"
+                                                :options="filters.options.country"
+                                                :placeholder="t.selectCountry"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.filterWiki }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setB.wiki"
+                                                :options="filters.options.wiki"
+                                                :placeholder="t.selectProject"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                
+                                        <div>
+                                            <label class="font-medium text-sm mb-1 block">{{ t.fileMonth }}</label>
+                                            <searchable-select
+                                                v-model="tabComparisonFilters.setB.file"
+                                                :options="filters.options.file"
+                                                :placeholder="t.selectFile"
+                                                :t="t">
+                                            </searchable-select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                
+                            <div class="text-center">
+                                <button
+                                    @click="runComparison(tabComparisonFilters)"
+                                    :disabled="!isTabComparisonValid"
+                                    class="btn btn-primary text-base py-2 px-6">
+                                    <i class="fas fa-balance-scale-right mr-2"></i>{{ t.compareSelections }}
+                                </button>
+                            </div>
+                            <comparison-chart
+                                v-if="comparisonResults"
+                                :results="comparisonResults"
+                                :t="t"
+                                :get-activity-level-label="getActivityLevelLabel">
+                            </comparison-chart>
+                            <div v-if="comparisonResults" class="bg-white p-6 rounded-lg shadow-sm border border-border-color">
+                                <h3 class="text-xl font-bold mb-4 text-center">{{ t.comparisonResultsTitle }}</h3>
+                            
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="bg-slate-50 text-slate-600">
+                                            <tr>
+                                                <th class="p-3 font-semibold rounded-tl-lg">{{ t.activityLevel }}</th>
+                                                <th class="p-3 font-semibold text-center">{{ comparisonResults.setA.name }}</th>
+                                                <th class="p-3 font-semibold text-center">{{ comparisonResults.setB.name }}</th>
+                                                <th class="p-3 font-semibold text-center rounded-tr-lg">{{ t.difference }}</th>
+                                            </tr>
+                                        </thead>
+                            
+                                        <tbody>
+                                            <tr v-for="(label, i) in comparisonResults.labels" class="border-b border-border-color">
+                                                <td class="p-3 font-medium">{{ label }}</td>
+                                                <td class="p-3 text-center text-lg font-semibold text-primary">
+                                                    {{ comparisonResults.setA.counts[i].toLocaleString(t.locale) }}
+                                                </td>
+                                                <td class="p-3 text-center text-lg font-semibold text-orange-600">
+                                                    {{ comparisonResults.setB.counts[i].toLocaleString(t.locale) }}
+                                                </td>
+                                                <td class="p-3 text-center">
+                                                    <span
+                                                        class="font-bold rounded-full px-2.5 py-1 text-xs"
+                                                        :class="(comparisonResults.setB.counts[i] - comparisonResults.setA.counts[i]) > 0 ? 'text-green-600 bg-green-100' : ((comparisonResults.setB.counts[i] - comparisonResults.setA.counts[i]) < 0 ? 'text-red-600 bg-red-100' : 'text-slate-600 bg-slate-100')">
+                                                        {{ (comparisonResults.setB.counts[i] - comparisonResults.setA.counts[i]) > 0 ? '+' : '' }}{{ (comparisonResults.setB.counts[i] - comparisonResults.setA.counts[i]).toLocaleString(t.locale) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                            
+                                        <tfoot class="bg-slate-50">
+                                            <tr class="font-bold text-slate-800">
+                                                <td class="p-3 rounded-bl-lg">{{ t.totalEditors }}</td>
+                                                <td class="p-3 text-center text-lg">
+                                                    {{ comparisonResults.setA.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}
+                                                </td>
+                                                <td class="p-3 text-center text-lg">
+                                                    {{ comparisonResults.setB.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}
+                                                </td>
+                                                <td class="p-3 text-center rounded-br-lg">
+                                                    <span
+                                                        class="font-bold rounded-full px-2.5 py-1 text-sm"
+                                                        :class="(comparisonResults.setB.counts.reduce((a,b)=>a+b,0) - comparisonResults.setA.counts.reduce((a,b)=>a+b,0)) > 0 ? 'text-green-600 bg-green-100' : ((comparisonResults.setB.counts.reduce((a,b)=>a+b,0) - comparisonResults.setA.counts.reduce((a,b)=>a+b,0)) < 0 ? 'text-red-600 bg-red-100' : 'text-slate-600 bg-slate-100')">
+                                                        {{ (comparisonResults.setB.counts.reduce((a,b)=>a+b,0) - comparisonResults.setA.counts.reduce((a,b)=>a+b,0)) > 0 ? '+' : '' }}{{ (comparisonResults.setB.counts.reduce((a,b)=>a+b,0) - comparisonResults.setA.counts.reduce((a,b)=>a+b,0)).toLocaleString(t.locale) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -270,7 +460,7 @@ const app = createApp({
                 tableHeaderUserName: 'Usuario',
                 tableHeaderEditCount: 'Ediciones',
                 tableHeaderRegistration: 'Registro',
-                tableHeaderActivityLevel: 'Nivel Actividad',
+                tableHeaderActivityLevel: 'Nivel actividad',
                 footerDevelopedBy: 'Desarrollado por Wikimedia Chile.',
                 footerDataSource: 'Los datos son obtenidos de conjuntos de datos públicos de Wikimedia Analytics.',
                 footerRights: 'CC BY-SA 4.0.',
@@ -278,22 +468,24 @@ const app = createApp({
                 next: 'Siguiente',
                 finish: 'Finalizar',
                 tutorialStats: 'Aquí tienes un resumen general de los datos cargados.',
-                tutorialFilters: 'Usa estos controles para segmentar los datos. El botón de balanza abre el comparador.',
-                tutorialTimeChart: 'Este gráfico de líneas muestra la evolución de los editores a lo largo del tiempo.',
-                tutorialActivityChart: 'Este gráfico de barras te da una vista rápida del total de editores en cada categoría.',
-                tutorialResultsTable: 'Finalmente, aquí puedes ver los datos en detalle. Usa la paginación para navegar.',
-                compareModalTitle: 'Comparar Datos de Actividad',
+                tutorialFilters: 'Usa estos controles para segmentar los datos por año, archivo, proyecto y país.',
+                tutorialTimeChart: 'Este gráfico de líneas muestra la evolución de los editores a lo largo del tiempo. Puedes hacer clic en las etiquetas de la leyenda para ocultar o mostrar niveles de actividad y comparar mejor los datos.',
+                tutorialActivityChart: 'Este gráfico de barras resume el total de editores por nivel de actividad.',
+                tutorialHeatmap: 'Este mapa de calor permite ver rápidamente en qué meses hay más o menos editores.',
+                tutorialResultsTable: 'Aquí puedes revisar los datos en detalle. La tabla está colapsada por defecto y puedes expandirla cuando necesites ver los registros.',
+                tutorialCompareTab: 'Desde la pestaña Comparar puedes crear comparaciones entre países, proyectos y meses, con una tabla y un gráfico dedicado.',
+                compareModalTitle: 'Comparar datos de actividad',
                 selectionA: 'Selección A',
                 selectionB: 'Selección B',
                 fileMonth: 'Archivo (Mes)',
                 selectCountry: 'Seleccione un país',
                 selectProject: 'Seleccione un proyecto',
                 selectFile: 'Seleccione un archivo',
-                compareSelections: 'Comparar Selecciones',
-                comparisonResultsTitle: 'Resultados de la Comparación',
-                activityLevel: 'Nivel de Actividad',
+                compareSelections: 'Comparar selecciones',
+                comparisonResultsTitle: 'Resultados de la comparación',
+                activityLevel: 'Nivel de actividad',
                 difference: 'Diferencia',
-                totalEditors: 'Total Editores',
+                totalEditors: 'Total editores',
                 statusFetchingFiles: 'Obteniendo lista de archivos...',
                 statusProcessing: 'Procesando',
                 filesLowercase: 'archivos',
@@ -305,6 +497,11 @@ const app = createApp({
                 languageSelectorLabel: 'Seleccionar idioma',
                 languageSpanish: 'Español',
                 languageEnglish: 'Inglés',
+                tabExplore: 'Explorar',
+                tabCompare: 'Comparar',
+                compareTabTitle: 'Comparaciones',
+                compareTabDescription: 'Crea comparaciones personalizadas entre países, proyectos y meses para explorar diferencias en la actividad de editores.',
+                comparisonChartTitle: 'Comparación por nivel de actividad',
             },
             en: {
                 appTitle: 'Geo-editors Viewer',
@@ -375,7 +572,7 @@ const app = createApp({
                 tableHeaderUserName: 'Username',
                 tableHeaderEditCount: 'Edits',
                 tableHeaderRegistration: 'Registration',
-                tableHeaderActivityLevel: 'Activity Level',
+                tableHeaderActivityLevel: 'Activity level',
                 footerDevelopedBy: 'Developed by Wikimedia Chile.',
                 footerDataSource: 'Data is obtained from public Wikimedia Analytics datasets.',
                 footerRights: 'CC BY-SA 4.0',
@@ -383,22 +580,24 @@ const app = createApp({
                 next: 'Next',
                 finish: 'Finish',
                 tutorialStats: 'Here you can see a general summary of the loaded data.',
-                tutorialFilters: 'Use these controls to segment the data. The scale button opens the comparison tool.',
-                tutorialTimeChart: 'This line chart shows how editors evolve over time.',
-                tutorialActivityChart: 'This bar chart gives you a quick view of the total number of editors in each category.',
-                tutorialResultsTable: 'Finally, here you can view the data in detail. Use pagination to browse it.',
-                compareModalTitle: 'Compare Activity Data',
+                tutorialFilters: 'Use these controls to segment the data by year, file, project, and country.',
+                tutorialTimeChart: 'This line chart shows how editors evolve over time. You can click the legend labels to hide or show activity levels and compare the data more clearly.',
+                tutorialActivityChart: 'This bar chart summarizes the total number of editors by activity level.',
+                tutorialHeatmap: 'This heatmap lets you quickly see which months have more or fewer editors.',
+                tutorialResultsTable: 'Here you can review the data in detail. The table is collapsed by default and can be expanded when you need to inspect the records.',
+                tutorialCompareTab: 'From the Compare tab, you can create comparisons between countries, projects, and months, with a dedicated table and chart.',
+                compareModalTitle: 'Compare activity data',
                 selectionA: 'Selection A',
                 selectionB: 'Selection B',
                 fileMonth: 'File (Month)',
                 selectCountry: 'Select a country',
                 selectProject: 'Select a project',
                 selectFile: 'Select a file',
-                compareSelections: 'Compare Selections',
-                comparisonResultsTitle: 'Comparison Results',
-                activityLevel: 'Activity Level',
+                compareSelections: 'Compare selections',
+                comparisonResultsTitle: 'Comparison results',
+                activityLevel: 'Activity level',
                 difference: 'Difference',
-                totalEditors: 'Total Editors',
+                totalEditors: 'Total editors',
                 statusFetchingFiles: 'Fetching file list...',
                 statusProcessing: 'Processing',
                 filesLowercase: 'files',
@@ -410,6 +609,11 @@ const app = createApp({
                 languageSelectorLabel: 'Select language',
                 languageSpanish: 'Spanish',
                 languageEnglish: 'English',
+                tabExplore: 'Explore',
+                tabCompare: 'Compare',
+                compareTabTitle: 'Comparisons',
+                compareTabDescription: 'Create custom comparisons between countries, projects, and months to explore differences in editor activity.',
+                comparisonChartTitle: 'Comparison by activity level',
             }
         };
 
@@ -425,6 +629,7 @@ const app = createApp({
         const statusMessage = ref('');
         const currentPage = ref(1);
         const isResultsTableOpen = ref(false);
+        const currentView = ref('explore')
         const ROWS_PER_PAGE = 20;
         const filters = reactive({
             file: '', year: 'all', wiki: [], country: [],
@@ -434,6 +639,19 @@ const app = createApp({
         // --- Lógica de Comparación ---
         const isComparisonModalOpen = ref(false);
         const comparisonResults = ref(null);
+        const tabComparisonFilters = reactive({
+            setA: { country: '', wiki: '', file: '' },
+            setB: { country: '', wiki: '', file: '' }
+        });
+
+        const isTabComparisonValid = computed(() =>
+            tabComparisonFilters.setA.country &&
+            tabComparisonFilters.setA.wiki &&
+            tabComparisonFilters.setA.file &&
+            tabComparisonFilters.setB.country &&
+            tabComparisonFilters.setB.wiki &&
+            tabComparisonFilters.setB.file
+        );
 
         const calculateActivityStats = (data) => {
             const counts = { '1-4': 0, '5-99': 0, '100+': 0 };
@@ -444,6 +662,13 @@ const app = createApp({
             });
             return counts;
         };
+
+        const getActivityLevelLabel = (level) => {
+            if (level === '1-4') return t.value.activityLevel1to4;
+            if (level === '5-99') return t.value.activityLevel5to99;
+            if (level === '100+') return t.value.activityLevel100plus;
+            return level;
+        };
         const runComparison = (compFilters) => {
             const dataA = allData.value.filter(d => d.country === compFilters.setA.country && d.wiki_db === compFilters.setA.wiki && d.__fileName === compFilters.setA.file);
             const dataB = allData.value.filter(d => d.country === compFilters.setB.country && d.wiki_db === compFilters.setB.wiki && d.__fileName === compFilters.setB.file);
@@ -451,7 +676,7 @@ const app = createApp({
             const statsB = calculateActivityStats(dataB);
             
             const results = {
-                labels: [t.value.activityLevel1to4, t.value.activityLevel5to99, t.value.activityLevel100plus],
+                labels: ['1-4', '5-99', '100+'],
                 setA: {
                     name: `${compFilters.setA.country} ${compFilters.setA.wiki} (${compFilters.setA.file})`,
                     counts: [statsA['1-4'], statsA['5-99'], statsA['100+']]
@@ -476,7 +701,9 @@ const app = createApp({
             { selector: '#filters-panel-tour', text: t.value.tutorialFilters },
             { selector: '#time-chart-tour', text: t.value.tutorialTimeChart },
             { selector: '#activity-chart-tour', text: t.value.tutorialActivityChart },
+            { selector: '#heatmap-tour', text: t.value.tutorialHeatmap },
             { selector: '#results-table-tour', text: t.value.tutorialResultsTable },
+            { selector: '#compare-tab-tour', text: t.value.tutorialCompareTab },
         ]);
         const currentTutorialStep = computed(() => tutorialSteps.value[tutorial.step]);
         
@@ -641,7 +868,7 @@ const app = createApp({
             'activity_level': t.value.tableHeaderActivityLevel
         }));
 
-        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t, heatmapData };
+        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t, heatmapData, currentView, tabComparisonFilters, isTabComparisonValid, getActivityLevelLabel };
     }
 });
 
@@ -790,19 +1017,16 @@ app.component('filters-panel', {
                     <button @click="emit('apply', localFilters)" class="btn btn-primary w-full">
                         <i class="fas fa-check mr-2"></i>{{ t.apply }}
                     </button>
+
                     <button @click="emit('clear')" class="btn btn-secondary w-full">
                         <i class="fas fa-times mr-2"></i>{{ t.clear }}
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <button @click="emit('export')" class="btn btn-secondary w-full" :title="t.export">
-                        <i class="fas fa-file-export mr-2"></i>{{ t.export }}
-                    </button>
-                    <button @click="emit('openCompare')" class="btn btn-secondary w-full" :title="t.compareData">
-                        <i class="fas fa-balance-scale mr-2"></i>{{ t.compare }}
-                    </button>
-                </div>
+                <button @click="emit('export')" class="btn btn-secondary w-full" :title="t.export">
+                    <i class="fas fa-file-export mr-2"></i>{{ t.export }}
+                </button>
+            </div>
             </div>
         </div>
     </div></div>`
@@ -819,7 +1043,89 @@ app.component('activity-chart', {
     setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${props.t.editors}: ${c.raw.toLocaleString(props.t.locale)}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '', color: '#54595d', font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d', callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: '#54595d' } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
     template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.activityChartTitle }}</h2></div><div class="card-body"><div class="h-80"><canvas ref="chartCanvas"></canvas></div></div></div>`
 });
+app.component('comparison-chart', {
+    props: ['results', 't', 'getActivityLevelLabel'],
+    setup(props) {
+        const chartCanvas = ref(null);
+        let chartInstance = null;
 
+        const renderChart = () => {
+            if (chartInstance) chartInstance.destroy();
+            if (!props.results || !chartCanvas.value) return;
+
+            const ctx = chartCanvas.value.getContext('2d');
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: props.results.labels.map(label => props.getActivityLevelLabel(label)),
+                    datasets: [
+                        {
+                            label: props.t.selectionA,
+                            data: props.results.setA.counts,
+                            backgroundColor: 'rgba(51, 102, 204, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: props.t.selectionB,
+                            data: props.results.setB.counts,
+                            backgroundColor: 'rgba(245, 141, 0, 0.8)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            backgroundColor: '#202122',
+                            callbacks: {
+                                label: c => `${c.dataset.label}: ${c.raw.toLocaleString(props.t.locale)} ${props.t.editorsLowercase}`
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '',
+                            color: '#54595d',
+                            font: { weight: '600' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#eaecf0' },
+                            ticks: {
+                                color: '#54595d',
+                                callback: v => (v >= 1000) ? `${v / 1000}k` : v
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#54595d' }
+                        }
+                    }
+                }
+            });
+        };
+
+        onMounted(renderChart);
+        watch(() => props.results, renderChart, { deep: true });
+        watch(() => props.t, renderChart, { deep: true });
+
+        return { chartCanvas };
+    },
+    template: `
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-border-color">
+            <h3 class="text-xl font-bold mb-4 text-center">{{ t.comparisonChartTitle }}</h3>
+            <div class="h-80">
+                <canvas ref="chartCanvas"></canvas>
+            </div>
+        </div>
+    `
+});
 app.component('heatmap-chart', {
     props: ['heatmapData', 't'],
     setup(props) {
@@ -1033,7 +1339,7 @@ app.component('comparison-modal', {
                                                 <tr><th class="p-3 font-semibold rounded-tl-lg">{{ t.activityLevel }}</th><th class="p-3 font-semibold text-center">{{ results.setA.name }}</th><th class="p-3 font-semibold text-center">{{ results.setB.name }}</th><th class="p-3 font-semibold text-center rounded-tr-lg">{{ t.difference }}</th></tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-for="(label, i) in results.labels" class="border-b border-border-color"><td class="p-3 font-medium">{{ label }}</td><td class="p-3 text-center text-lg font-semibold text-primary">{{ results.setA.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center text-lg font-semibold text-orange-600">{{ results.setB.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center"><span class="font-bold rounded-full px-2.5 py-1 text-xs" :class="getDiffClass(results.setB.counts[i] - results.setA.counts[i])">{{ (results.setB.counts[i] - results.setA.counts[i]) > 0 ? '+' : '' }}{{ (results.setB.counts[i] - results.setA.counts[i]).toLocaleString(t.locale) }}</span></td></tr>
+                                                <tr v-for="(label, i) in results.labels" class="border-b border-border-color"><td class="p-3 font-medium">{{ getActivityLevelLabel(label) }}</td><td class="p-3 text-center text-lg font-semibold text-primary">{{ results.setA.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center text-lg font-semibold text-orange-600">{{ results.setB.counts[i].toLocaleString(t.locale) }}</td><td class="p-3 text-center"><span class="font-bold rounded-full px-2.5 py-1 text-xs" :class="getDiffClass(results.setB.counts[i] - results.setA.counts[i])">{{ (results.setB.counts[i] - results.setA.counts[i]) > 0 ? '+' : '' }}{{ (results.setB.counts[i] - results.setA.counts[i]).toLocaleString(t.locale) }}</span></td></tr>
                                             </tbody>
                                             <tfoot class="bg-slate-50"><tr class="font-bold text-slate-800"><td class="p-3 rounded-bl-lg">{{ t.totalEditors }}</td><td class="p-3 text-center text-lg">{{ results.setA.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}</td><td class="p-3 text-center text-lg">{{ results.setB.counts.reduce((a,b)=>a+b,0).toLocaleString(t.locale) }}</td><td class="p-3 text-center rounded-br-lg"><span class="font-bold rounded-full px-2.5 py-1 text-sm" :class="getDiffClass(results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0))">{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)) > 0 ? '+' : '' }}{{ (results.setB.counts.reduce((a,b)=>a+b,0) - results.setA.counts.reduce((a,b)=>a+b,0)).toLocaleString(t.locale) }}</span></td></tr></tfoot>
                                         </table>
