@@ -25,6 +25,100 @@
             --dark-gray: #54595d; --card-bg: #ffffff; --text-dark: #202122;
             --text-light: #54595d; --border-color: #dee2e6; --green: #00af89; --orange: #f58d00;
         }
+        html[data-theme="dark"] {
+            --primary: #8aa8ff;
+            --primary-dark: #a8bcff;
+            --primary-light: #1f2f55;
+            --accent: #ff6b6b;
+            --light-gray: #111827;
+            --medium-gray: #1f2937;
+            --dark-gray: #d1d5db;
+            --card-bg: #1f2937;
+            --text-dark: #f9fafb;
+            --text-light: #d1d5db;
+            --border-color: #374151;
+            --green: #34d399;
+            --orange: #fbbf24;
+        }
+        /* Dark mode overrides for Tailwind utility classes used in the app */
+        html[data-theme="dark"] body {
+            background-color: var(--light-gray);
+            color: var(--text-dark);
+        }
+
+        html[data-theme="dark"] .bg-white,
+        html[data-theme="dark"] .card,
+        html[data-theme="dark"] .modal-content {
+            background-color: var(--card-bg) !important;
+            color: var(--text-dark) !important;
+        }
+
+        html[data-theme="dark"] .bg-light-gray,
+        html[data-theme="dark"] .bg-slate-50,
+        html[data-theme="dark"] .hover\:bg-slate-100:hover {
+            background-color: #111827 !important;
+        }
+
+        html[data-theme="dark"] .text-slate-800,
+        html[data-theme="dark"] .text-slate-700,
+        html[data-theme="dark"] .text-slate-600 {
+            color: var(--text-dark) !important;
+        }
+
+        html[data-theme="dark"] .text-slate-500,
+        html[data-theme="dark"] .text-slate-400 {
+            color: var(--text-light) !important;
+        }
+
+        html[data-theme="dark"] .border-border-color,
+        html[data-theme="dark"] .border-gray-300 {
+            border-color: var(--border-color) !important;
+        }
+
+        html[data-theme="dark"] .filter-input,
+        html[data-theme="dark"] select,
+        html[data-theme="dark"] input {
+            background-color: #111827 !important;
+            color: var(--text-dark) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        html[data-theme="dark"] .filter-input::placeholder,
+        html[data-theme="dark"] input::placeholder {
+            color: #9ca3af !important;
+        }
+
+        html[data-theme="dark"] .btn-secondary {
+            background-color: #111827 !important;
+            color: var(--text-dark) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        html[data-theme="dark"] .btn-secondary:hover:not(:disabled) {
+            background-color: #1f2937 !important;
+            border-color: #6b7280 !important;
+        }
+
+        html[data-theme="dark"] table thead,
+        html[data-theme="dark"] table tfoot {
+            background-color: #111827 !important;
+            color: var(--text-dark) !important;
+        }
+
+        html[data-theme="dark"] table tbody tr {
+            border-color: var(--border-color) !important;
+        }
+
+        html[data-theme="dark"] .modal-overlay,
+        html[data-theme="dark"] .tutorial-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        html[data-theme="dark"] .tutorial-popover {
+            background-color: var(--card-bg);
+            color: var(--text-dark);
+            border-color: var(--border-color);
+        }
         html, body { height: 100%; }
         body { background-color: var(--light-gray); font-family: 'Inter', sans-serif; color: var(--text-dark); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; margin: 0; }
         #app { display: flex; flex-direction: column; min-height: 100vh; }
@@ -79,7 +173,10 @@
         <header class="bg-white py-4 border-b border-border-color sticky top-0 z-20">
             <div class="container mx-auto px-4 max-w-7xl flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img src="/logo.png" alt="Wikimedia Chile" class="h-10 w-auto">
+                    <img
+                        :src="currentTheme === 'dark' ? '/logo-white.png' : '/logo.png'"
+                        alt="Wikimedia Chile"
+                        class="h-10 w-auto">
                     <div>
                         <h1 class="text-xl font-bold text-slate-800">{{ t.appTitle }}</h1>
                         <p class="text-sm text-slate-500 hidden md:block">{{ t.appSubtitle }}</p>
@@ -105,6 +202,13 @@
                             {{ t.tabCompare }}
                         </button>
                     </div>
+                    <button
+                        @click="toggleTheme"
+                        class="btn btn-secondary !py-1.5 !px-3 text-sm"
+                        :aria-label="t.themeToggleLabel"
+                        :title="currentTheme === 'light' ? t.themeDark : t.themeLight">
+                        <i class="fas" :class="currentTheme === 'light' ? 'fa-moon' : 'fa-sun'"></i>
+                    </button>
                 
                     <select
                         v-model="currentLang"
@@ -158,12 +262,25 @@
                     <stats-panel id="stats-panel-tour" :stats="stats" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 0 }"></stats-panel>
                 <filters-panel id="filters-panel-tour" :filters="filters" :t="t" @apply="applyFilters" @clear="clearFilters" @export="exportData" @open-compare="openComparisonModal" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 1 }"></filters-panel>
                 <div v-if="filteredData.length > 0" class="space-y-8">
-                    <editors-over-time-chart id="time-chart-tour" :chart-data="editorsOverTimeChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }"></editors-over-time-chart>
-                    <activity-chart id="activity-chart-tour" :chart-data="activityChartData" :t="t" :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }"></activity-chart>
+                    <editors-over-time-chart
+                        id="time-chart-tour"
+                        :chart-data="editorsOverTimeChartData"
+                        :t="t"
+                        :chart-colors="chartColors"
+                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 2 }">
+                    </editors-over-time-chart>
+                    <activity-chart
+                        id="activity-chart-tour"
+                        :chart-data="activityChartData"
+                        :t="t"
+                        :chart-colors="chartColors"
+                        :class="{ 'highlighted-element': tutorial.active && tutorial.step === 3 }">
+                    </activity-chart>
                     <heatmap-chart
                         id="heatmap-tour"
                         :heatmap-data="heatmapData"
                         :t="t"
+                        :current-theme="currentTheme"
                         :class="{ 'highlighted-element': tutorial.active && tutorial.step === 4 }">
                     </heatmap-chart>
                     <results-table
@@ -286,6 +403,7 @@
                                 v-if="comparisonResults"
                                 :results="comparisonResults"
                                 :t="t"
+                                :chart-colors="chartColors"
                                 :get-activity-level-label="getActivityLevelLabel">
                             </comparison-chart>
                             <div v-if="comparisonResults" class="bg-white p-6 rounded-lg shadow-sm border border-border-color">
@@ -367,15 +485,6 @@
         <div v-if="tutorial.active" class="tutorial-overlay"></div>
         <div v-if="tutorial.active && currentTutorialStep" class="tutorial-popover" :style="tutorial.position"><p class="text-slate-700 mb-6 text-lg">{{ currentTutorialStep.text }}</p><div class="flex justify-between items-center"><span class="text-sm font-medium text-slate-500">{{ tutorial.step + 1 }} / {{ tutorialSteps.length }}</span><div><button @click="endTutorial" class="btn btn-secondary !py-1 !px-3 mr-2">{{ t.skip }}</button><button @click="nextTutorialStep" class="btn btn-primary !py-1 !px-3">{{ tutorial.step === tutorialSteps.length - 1 ? t.finish : t.next }}<i class="fas fa-arrow-right ml-2"></i></button></div></div></div>
 
-        <!-- Modal de Comparación -->
-        <comparison-modal
-            :show="isComparisonModalOpen"
-            :filters="filters"
-            :results="comparisonResults"
-            :t="t"
-            @close="closeComparisonModal"
-            @compare="runComparison">
-        </comparison-modal>
 </div>
 
     <script type="module">
@@ -389,6 +498,22 @@ const app = createApp({
     setup() {
         // --- i18n / Traducciones ---
         const currentLang = ref('es');
+        const currentTheme = ref(localStorage.getItem('geoeditors-theme') || 'light');
+
+        const toggleTheme = () => {
+            currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light';
+        };
+
+        const chartColors = computed(() => {
+        const isDark = currentTheme.value === 'dark';
+
+        return {
+            text: isDark ? '#d1d5db' : '#54595d',
+            grid: isDark ? '#374151' : '#eaecf0',
+            tooltipBg: isDark ? '#111827' : '#202122',
+            datalabel: isDark ? '#d1d5db' : '#54595d'
+        };
+    });
 
         const translations = {
             es: {
@@ -502,6 +627,9 @@ const app = createApp({
                 compareTabTitle: 'Comparaciones',
                 compareTabDescription: 'Crea comparaciones personalizadas entre países, proyectos y meses para explorar diferencias en la actividad de editores.',
                 comparisonChartTitle: 'Comparación por nivel de actividad',
+                themeToggleLabel: 'Cambiar tema',
+                themeLight: 'Modo claro',
+                themeDark: 'Modo oscuro',
             },
             en: {
                 appTitle: 'Geo-editors Viewer',
@@ -614,12 +742,18 @@ const app = createApp({
                 compareTabTitle: 'Comparisons',
                 compareTabDescription: 'Create custom comparisons between countries, projects, and months to explore differences in editor activity.',
                 comparisonChartTitle: 'Comparison by activity level',
+                themeToggleLabel: 'Change theme',
+                themeLight: 'Light mode',
+                themeDark: 'Dark mode',
             }
         };
 
         const t = computed(() => translations[currentLang.value]);
         watch(currentLang, () => {document.title = t.value.documentTitle;}, { immediate: true });
-
+        watch(currentTheme, () => {
+        document.documentElement.setAttribute('data-theme', currentTheme.value);
+        localStorage.setItem('geoeditors-theme', currentTheme.value);
+    }, { immediate: true });
         // --- Estados Principales ---
         const allData = ref([]);
         const filteredData = ref([]);
@@ -868,7 +1002,7 @@ const app = createApp({
             'activity_level': t.value.tableHeaderActivityLevel
         }));
 
-        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t, heatmapData, currentView, tabComparisonFilters, isTabComparisonValid, getActivityLevelLabel };
+        return { allData, filteredData, headers, isLoading, statusMessage, hasError, currentPage, isResultsTableOpen, stats, filters, totalPages, paginatedData, activityChartData, editorsOverTimeChartData, fetchAllDataFiles, applyFilters, clearFilters, changePage, exportData, headerTranslations, currentYear, tutorial, tutorialSteps, currentTutorialStep, nextTutorialStep, endTutorial, isComparisonModalOpen, openComparisonModal, closeComparisonModal, runComparison, comparisonResults, currentLang, t, heatmapData, currentView, tabComparisonFilters, isTabComparisonValid, getActivityLevelLabel, currentTheme, toggleTheme, chartColors };
     }
 });
 
@@ -1033,18 +1167,23 @@ app.component('filters-panel', {
 });
 
 app.component('editors-over-time-chart', {
-    props: ['chartData', 't'],
-    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); chartInstance = new Chart(ctx, { type: 'line', data: { labels: props.chartData.labels, datasets: props.chartData.datasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${c.dataset.label}: ${c.raw.toLocaleString(props.t.locale)} ${props.t.editorsLowercase}` } }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d' } }, x: { grid: { display: false }, ticks: { color: '#54595d', maxRotation: 45, minRotation: 45 } } }, interaction: { intersect: false, mode: 'index' } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
+    props: ['chartData', 't', 'chartColors'],
+    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); chartInstance = new Chart(ctx, { type: 'line', data: { labels: props.chartData.labels, datasets: props.chartData.datasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {
+    position: 'bottom',
+    labels: {
+        color: props.chartColors.text
+    }
+}, tooltip: { backgroundColor: props.chartColors.tooltipBg, callbacks: { label: c => `${c.dataset.label}: ${c.raw.toLocaleString(props.t.locale)} ${props.t.editorsLowercase}` } }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: props.chartColors.grid }, ticks: { color: props.chartColors.text } }, x: { grid: { display: false }, ticks: { color: props.chartColors.text, maxRotation: 45, minRotation: 45 } } }, interaction: { intersect: false, mode: 'index' } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); watch(() => props.chartColors, renderChart, { deep: true }); return { chartCanvas }; },
     template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.timeChartTitle }}</h2></div><div class="card-body"><div class="h-96"><canvas ref="chartCanvas"></canvas></div></div></div>`
 });
 
 app.component('activity-chart', {
-    props: ['chartData', 't'],
-    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#202122', callbacks: { label: c => `${props.t.editors}: ${c.raw.toLocaleString(props.t.locale)}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '', color: '#54595d', font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: '#eaecf0' }, ticks: { color: '#54595d', callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: '#54595d' } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); return { chartCanvas }; },
+    props: ['chartData', 't', 'chartColors'],
+    setup(props) { const chartCanvas = ref(null); let chartInstance = null; const renderChart = () => { if (chartInstance) chartInstance.destroy(); if (!props.chartData || !chartCanvas.value) return; const ctx = chartCanvas.value.getContext('2d'); const colors = ['#3366cc','#f58d00','#00af89']; chartInstance = new Chart(ctx, { type: 'bar', data: { labels: props.chartData.labels, datasets: [{ data: props.chartData.data, backgroundColor: colors.slice(0, props.chartData.data.length), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: props.chartColors.tooltipBg, callbacks: { label: c => `${props.t.editors}: ${c.raw.toLocaleString(props.t.locale)}` }}, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '', color: props.chartColors.datalabel, font: { weight: '600' } } }, scales: { y: { beginAtZero: true, grid: { color: props.chartColors.grid }, ticks: { color: props.chartColors.text, callback: v => (v >= 1000) ? `${v/1000}k` : v }, suggestedMax: Math.max(...props.chartData.data) * 1.15 }, x: { grid: { display: false }, ticks: { color: props.chartColors.text } } } } }); }; onMounted(renderChart); watch(() => props.chartData, renderChart); watch(() => props.chartColors, renderChart, { deep: true }); return { chartCanvas }; },
     template: `<div class="card"><div class="card-header"><h2 class="text-xl font-bold">{{ t.activityChartTitle }}</h2></div><div class="card-body"><div class="h-80"><canvas ref="chartCanvas"></canvas></div></div></div>`
 });
 app.component('comparison-chart', {
-    props: ['results', 't', 'getActivityLevelLabel'],
+    props: ['results', 't', 'chartColors', 'getActivityLevelLabel'],
     setup(props) {
         const chartCanvas = ref(null);
         let chartInstance = null;
@@ -1078,9 +1217,14 @@ app.component('comparison-chart', {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom' },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: props.chartColors.text
+                            }
+                        },
                         tooltip: {
-                            backgroundColor: '#202122',
+                            backgroundColor: props.chartColors.tooltipBg,
                             callbacks: {
                                 label: c => `${c.dataset.label}: ${c.raw.toLocaleString(props.t.locale)} ${props.t.editorsLowercase}`
                             }
@@ -1089,22 +1233,28 @@ app.component('comparison-chart', {
                             anchor: 'end',
                             align: 'top',
                             formatter: (v) => v > 0 ? v.toLocaleString(props.t.locale) : '',
-                            color: '#54595d',
+                            color: props.chartColors.datalabel,
                             font: { weight: '600' }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: '#eaecf0' },
+                            grid: {
+                                color: props.chartColors.grid
+                            },
                             ticks: {
-                                color: '#54595d',
+                                color: props.chartColors.text,
                                 callback: v => (v >= 1000) ? `${v / 1000}k` : v
                             }
                         },
                         x: {
-                            grid: { display: false },
-                            ticks: { color: '#54595d' }
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: props.chartColors.text
+                            }
                         }
                     }
                 }
@@ -1114,6 +1264,7 @@ app.component('comparison-chart', {
         onMounted(renderChart);
         watch(() => props.results, renderChart, { deep: true });
         watch(() => props.t, renderChart, { deep: true });
+        watch(() => props.chartColors, renderChart, { deep: true });
 
         return { chartCanvas };
     },
@@ -1127,7 +1278,7 @@ app.component('comparison-chart', {
     `
 });
 app.component('heatmap-chart', {
-    props: ['heatmapData', 't'],
+    props: ['heatmapData', 't', 'currentTheme'],
     setup(props) {
         const getIntensity = (value) => {
             const min = props.heatmapData.min;
@@ -1142,16 +1293,24 @@ app.component('heatmap-chart', {
         };
 
         const getBackgroundColor = (value) => {
-            // meses sin datos
-            if (value === null) return '#f8f9fa';
-            const intensity = getIntensity(value);
+        const isDark = props.currentTheme === 'dark';
 
-            return `rgba(51, 102, 204, ${intensity.toFixed(2)})`
-        };
+        if (value === null) {
+            return isDark ? '#111827' : '#f8f9fa';
+        }
 
-        const getTextColor = (value) => {
-            return getIntensity(value) > 0.55 ? 'white' : 'black';
-        };
+        const intensity = getIntensity(value);
+
+        return isDark
+            ? `rgba(138, 168, 255, ${intensity.toFixed(2)})`
+            : `rgba(51, 102, 204, ${intensity.toFixed(2)})`;
+    };
+
+    const getTextColor = (value) => {
+        if (value === null) return props.currentTheme === 'dark' ? '#d1d5db' : '#54595d';
+
+        return getIntensity(value) > 0.55 ? 'white' : (props.currentTheme === 'dark' ? '#f9fafb' : '#202122');
+    };
 
         return {getBackgroundColor, getTextColor}
     },
