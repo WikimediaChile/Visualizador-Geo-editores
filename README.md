@@ -13,6 +13,8 @@ This viewer is designed to support the analysis of the Wikimedia Foundation’s 
 
 The client-server architecture, with a **Node.js backend** and a **Vue.js 3 frontend**, ensures robust performance, avoids CORS issues, and provides a smooth and fully responsive user experience.
 
+
+
 The interface currently supports **Spanish and English**. Translations are managed through a `translations` object in `public/index.html`, making it easier to add more languages in the future.
 
 ## About the Data
